@@ -1,0 +1,4 @@
+DATABASE_URL="file:./dev.db"
+
+RESEND_API_KEY=re_FyNg9CKn_AGNJJFdF7YNKin3NA8WtqXf9
+NEXT_PUBLIC_APP_URL=http://localhost:3000

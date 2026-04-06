@@ -1,0 +1,836 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum DocumentType {
+  DNI
+  PASSPORT
+  NIE
+  CIF
+}
+
+enum TransactionSource {
+  ROYALTY
+  ROYALTY_EARNING
+  PAYOUT
+  ADJUSTMENT
+}
+
+enum RoyaltyKind {
+  MASTER
+  PUBLISHING
+  PRODUCER
+}
+
+enum RecordingEdition {
+  ORIGINAL
+  REMASTERED
+  RADIO_EDIT
+  LIVE
+  ACOUSTIC
+  INSTRUMENTAL
+}
+
+enum TrackArtistRole {
+  MAIN
+  FEATURED
+  PRODUCER
+  REMIXER
+}
+
+enum LegalEntityType {
+  INDIVIDUAL
+  COMPANY
+}
+
+enum PRO {
+  SGAE
+  ASCAP
+  BMI
+  PRS
+  SOCAN
+  SACEM
+  GEMA
+}
+
+enum KycStatus {
+  NOT_STARTED
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum TransactionStatus {
+  PENDING
+  PAID
+  FAILED
+  CANCELLED
+  AVAILABLE
+}
+
+enum TransactionType {
+  EARNING
+  WITHDRAWAL
+    ROYALTY
+  PAYOUT
+  ADJUSTMENT
+  WITHHOLDING
+  TAX
+}
+
+enum ReleaseStatus {
+  DRAFT
+  PENDING
+  SUBMITTED
+  AWAITING_SIGNATURE
+  CONTRACT_GENERATED
+  SIGNED
+  APPROVED
+  REJECTED
+  DISTRIBUTING
+  LIVE
+}
+
+
+enum Platform {
+  SPOTIFY
+  APPLE_MUSIC
+  AMAZON
+  YOUTUBE
+  YOUTUBE_MUSIC
+  DEEZER
+  TIDAL
+  SOUNDCLOUD
+  PANDORA
+  TENCENT
+  NETEASE
+  QQ_MUSIC
+  KUGOU
+  KUWO
+  GAANA
+  JIOSAAVN
+  BOOMPLAY
+  ANGHAMI
+  AUDIOMACK
+  SNAPCHAT
+  TIKTOK
+  INSTAGRAM
+  FACEBOOK
+  RESSO
+  CAPCUT
+  SHAZAM
+  BEATPORT
+  TRAXSOURCE
+  VEVO
+  NAPSTER
+}
+
+enum Genre {
+  pop
+  hip_hop
+  electronic
+  rock
+  latin
+  rnb
+  afro
+  reggae
+  jazz
+  classical
+  country
+  folk
+  metal
+  soundtrack
+  other
+}
+
+enum SubGenre {
+  // POP
+  dance_pop
+  indie_pop
+  electropop
+  teen_pop
+  pop_rock
+
+  // HIP HOP
+  trap
+  drill
+  boom_bap
+  lofi
+  uk_rap
+  conscious_hip_hop
+
+  // ELECTRONIC
+  house
+  tech_house
+  deep_house
+  techno
+  melodic_techno
+  edm
+  trance
+  dubstep
+
+  // LATIN
+  reggaeton
+  latin_trap
+  bachata
+  salsa
+  dembow
+
+  // ROCK
+  alternative_rock
+  indie_rock
+  hard_rock
+  punk
+
+  // RNB
+  contemporary_rnb
+  neo_soul
+
+  // AFRO
+  afrobeats
+  amapiano
+
+  // REGGAE
+  dancehall
+  roots_reggae
+
+  // JAZZ
+  smooth_jazz
+  bebop
+
+  // CLASSICAL
+  orchestral
+  chamber_music
+
+  // COUNTRY
+  modern_country
+  country_pop
+
+  // FOLK
+  indie_folk
+  acoustic_folk
+
+  // METAL
+  metalcore
+  death_metal
+  heavy_metal
+
+  // SOUNDTRACK
+  film_score
+  video_game_music
+
+  // OTHER
+  instrumental
+  experimental
+}
+
+model User {
+  id                      String                   @id @default(cuid())
+  firstName               String?
+  lastName                String?
+  dni                     String?
+  dateOfBirth             DateTime?
+  country                 String?
+  phone                   String?
+  verified                Boolean                  @default(false)
+  email                   String                   @unique
+  password                String
+  name                    String?
+  role                    String                   @default("USER") // USER or ADMIN
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @updatedAt
+  artist                  Artist?
+  contracts               Contract[] // 👈 AÑADIDO
+  emailVerification       EmailVerification[]
+  payoutProfile           PayoutProfile?
+  distributionPreferences DistributionPreference[]
+  royaltyTransactions     RoyaltyTransaction[]
+  documents               Document[]
+  kyc                     KycVerification?
+  onboardingCompleted     Boolean                  @default(false)
+  onboardingCompletedAt   DateTime?
+  reviewedReleases        Release[]                @relation("ReleaseReviewer")
+  termsAcceptedAt         DateTime?
+  privacyAcceptedAt       DateTime?
+  termsVersion            String?
+  passwordResetTokens     PasswordResetToken[]
+  rightsHolders           RightsHolder[]
+    balance Float @default(0)
+}
+
+model KycVerification {
+  id     String @id @default(cuid())
+  userId String @unique
+
+  // 🔎 Tipo de entidad
+  legalEntityType LegalEntityType @default(INDIVIDUAL)
+
+  // 👤 Datos personales / representante
+  firstName   String?
+  lastName    String?
+  dateOfBirth DateTime?
+  nationality String?
+
+  // 🆔 Documento
+  documentType   DocumentType?
+  documentNumber String?
+
+  // 🏢 Datos empresa (si aplica)
+  companyName               String?
+  companyRegistrationNumber String? // CIF / VAT
+
+  // 📍 Dirección fiscal
+  addressLine1 String?
+  addressLine2 String?
+  city         String?
+  state        String?
+  postalCode   String?
+  country      String?
+
+  // 🧾 Datos fiscales
+  taxId           String?
+  taxCountry      String?
+  vatNumber       String?
+  isVatRegistered Boolean @default(false)
+
+  // 🏦 Datos bancarios
+  accountHolderName String?
+  iban              String?
+  swift             String?
+  bankName          String?
+  bankCountry       String?
+
+  // 🔐 Stripe (si lo usas)
+  stripeAccountId          String?
+  stripeOnboardingComplete Boolean @default(false)
+
+  // 📊 Estado KYC
+  status         KycStatus @default(NOT_STARTED)
+  approvedAt     DateTime?
+  rejectedReason String?
+  riskScore      Float?
+  reviewedAt     DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model EmailVerification {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ArtistPlatform {
+  id             String    @id @default(cuid())
+  artistId       String
+  platform       Platform
+  platformUserId String
+  url            String?
+  verified       Boolean   @default(false)
+  verifiedAt     DateTime?
+  metadata       Json? // followers, monthlyListeners, etc.
+  createdAt      DateTime  @default(now())
+  isPrimary      Boolean   @default(false)
+
+  artist Artist @relation(fields: [artistId], references: [id], onDelete: Cascade)
+
+  @@unique([artistId, platform])
+}
+
+model Artist {
+  id         String           @id @default(cuid())
+  userId     String           @unique
+  user       User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  genre      String?
+  subGenre   String?
+  bio        String?
+  releases   Release[]
+  works      Work[]
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+  platforms  ArtistPlatform[]
+  isVerified Boolean          @default(false)
+  verifiedAt DateTime?
+}
+
+model Release {
+  id               String     @id @default(cuid())
+  artistId         String
+  artist           Artist     @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  title            String
+  releaseDate      DateTime
+  coverUrl         String?
+  label            String     @default("Independent")
+  upc              String?    @unique
+  tracks           Track[]
+  contracts        Contract[] // 👈 AÑADIDO
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+  genre            String?
+  language         String?
+  copyrightYear    Int?
+  producerName     String?
+  composerName     String?
+  publisher        String?
+  distributionType String? // SINGLE / EP / ALBUM
+
+  // 🔥 RESTAURAR ESTO
+  distributionPlatforms   Json?
+  distributionWorldwide   Boolean @default(true)
+  distributionTerritories Json?
+
+  storeStats      StoreStat[]
+  rejectionReason String?
+  reviewedAt      DateTime?
+  reviewedById    String?
+  reviewedBy      User?           @relation("ReleaseReviewer", fields: [reviewedById], references: [id])
+  contractId      String?
+  contractHash    String?
+  status          ReleaseStatus   @default(DRAFT)
+  signedUserAgent String?
+  signedAt        DateTime?
+  signedIp        String?
+  distributedAt   DateTime?
+  liveAt          DateTime?
+  catalogNumber   String?         @unique
+  releaseArtists  ReleaseArtist[]
+  dspDeliveries   DSPDelivery[]
+  royaltyUsages   RoyaltyUsage[]
+}
+
+model Track {
+  id                String             @id @default(cuid())
+  releaseId         String
+  release           Release            @relation(fields: [releaseId], references: [id], onDelete: Cascade)
+  title             String
+  trackNumber       Int
+  fileUrl           String
+  isrc              String?            @unique
+  duration          Int? // duration in seconds
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  iswc              String?
+  lyrics            String?
+  publisher         String?
+  composer          String?
+  subGenre          String?
+  isInstrumental    Boolean            @default(false)
+  explicit          Boolean            @default(false)
+  previewStart      Int? // segundos donde empieza preview
+  artists           TrackArtist[]
+  publishingCredits PublishingCredit[]
+  masterParties     MasterParty[]
+  segments          TrackSegment[]
+  estimatedBPM      Int?
+  estimatedTone     String?
+  estimatedDanceability   String?
+  workId            String?
+  work              Work?              @relation(fields: [workId], references: [id])
+  audioCodec        String? // WAV, FLAC
+  sampleRate        Int? // 44100, 48000
+  bitDepth          Int? // 16, 24
+  recordingEdition  RecordingEdition   @default(ORIGINAL)
+  royaltyUsage      RoyaltyUsage[]
+  royaltyEarnings   RoyaltyEarning[]
+}
+
+model Work {
+  id String @id @default(cuid())
+
+  title String
+  iswc  String? @unique
+
+  language  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tracks Track[]
+
+  // metadata opcional editorial
+  alternativeTitle String?
+  territory        String?
+
+  createdByArtistId String?
+  createdByArtist   Artist? @relation(fields: [createdByArtistId], references: [id])
+}
+
+model TrackSegment {
+  id        String   @id @default(cuid())
+  trackId   String
+  track     Track    @relation(fields: [trackId], references: [id], onDelete: Cascade)
+  start     Float
+  end       Float
+  type      String
+  createdAt DateTime @default(now())
+
+  @@index([trackId])
+}
+
+model Analytics {
+  id        String   @id @default(cuid())
+  date      DateTime @default(now())
+  platform  String // Spotify, Apple, etc.
+  streams   Int      @default(0)
+  revenue   Float    @default(0.0)
+  createdAt DateTime @default(now())
+}
+
+model Contract {
+  id             String   @id @default(cuid())
+  contractNumber String   @unique
+  userId         String
+  releaseId      String? // 👈 opcional
+  hash           String
+  createdAt      DateTime @default(now())
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  release Release? @relation(fields: [releaseId], references: [id], onDelete: Cascade)
+}
+
+model PayoutProfile {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  accountHolderName String?
+  bankName          String?
+  iban              String?
+  swift             String?
+  taxId             String?
+  taxCountry        String?
+  vatNumber         String?
+  createdAt         DateTime @default(now())
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model StoreStat {
+  id        String   @id @default(cuid())
+  releaseId String
+  store     String
+  streams   Int
+  revenue   Float
+  month     String
+  createdAt DateTime @default(now())
+  release   Release  @relation(fields: [releaseId], references: [id], onDelete: Cascade)
+}
+
+model DistributionPreference {
+  id         String  @id @default(cuid())
+  userId     String
+  spotify    Boolean @default(true)
+  apple      Boolean @default(true)
+  amazon     Boolean @default(true)
+  deezer     Boolean @default(true)
+  youtube    Boolean @default(true)
+  tiktok     Boolean @default(true)
+  instagram  Boolean @default(true)
+  tidal      Boolean @default(true)
+  soundcloud Boolean @default(false)
+  user       User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model RoyaltyTransaction {
+  id             String   @id @default(cuid())
+
+  userId         String
+  rightsHolderId String
+
+  trackId        String?
+
+  type           TransactionType
+  status         TransactionStatus
+
+  amount         Float
+  currency       String
+
+  sourceId       String?
+  sourceType     TransactionSource
+
+  reportMonth    DateTime?
+
+  requiresKyc    Boolean  @default(true)
+
+  createdAt      DateTime @default(now())
+
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Document {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String
+  url       String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model TrackArtist {
+  id           String          @id @default(cuid())
+  trackId      String
+  track        Track           @relation(fields: [trackId], references: [id], onDelete: Cascade)
+  artistName   String
+  role         TrackArtistRole
+  isPrimary    Boolean         @default(false)
+  spotifyId    String?
+  appleId      String?
+  youtubeId    String?
+  spotifyUrl   String?
+  appleUrl     String?
+  youtubeUrl   String?
+  instagramUrl String?
+  createdAt    DateTime        @default(now())
+
+  @@index([trackId])
+}
+
+model ReleaseArtist {
+  id         String  @id @default(cuid())
+  releaseId  String
+  artistName String
+  isPrimary  Boolean @default(true)
+  release    Release @relation(fields: [releaseId], references: [id], onDelete: Cascade)
+}
+
+model RightsHolder {
+  id String @id @default(cuid())
+
+  firstName String?
+  lastName  String?
+  name      String?
+
+  email String?
+  phone String?
+
+  nationality String?
+  ipi         String?
+  pro         String?
+
+  taxId      String?
+  taxCountry String?
+
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id])
+
+  publishingCredits PublishingCredit[]
+  masterParties     MasterParty[]
+
+  royaltyEarnings RoyaltyEarning[]
+
+  createdAt DateTime @default(now())
+}
+
+model PublishingCredit {
+  id              String       @id @default(cuid())
+  trackId         String
+  track           Track        @relation(fields: [trackId], references: [id], onDelete: Cascade)
+  firstName       String
+  lastName        String
+  role            String // AUTOR_MUSICA, AUTOR_LETRA, etc.
+  ipiNumber       String?
+  pro             PRO?
+  email           String?
+  phone           String?
+  documentNumber  String?
+  publisherName   String?
+  publisherIpi    String?
+  share           Float
+  nationality     String?
+  address         String?
+  societyMemberId String?
+  rightsHolderId  String
+  rightsHolder    RightsHolder @relation(fields: [rightsHolderId], references: [id])
+  createdAt       DateTime     @default(now())
+
+  @@index([trackId])
+}
+
+model MasterParty {
+  id             String          @id @default(cuid())
+  trackId        String
+  track          Track           @relation(fields: [trackId], references: [id], onDelete: Cascade)
+  legalName      String
+  stageName      String?
+  entityType     LegalEntityType @default(INDIVIDUAL)
+  taxId          String?
+  taxCountry     String?
+  email          String?
+  phone          String?
+  role           String // ARTIST, PRODUCER, LABEL, INVESTOR
+  ownershipShare Float
+  revenueShare   Float?
+  isrcOwner      Boolean         @default(false)
+  rightsHolderId String
+  rightsHolder   RightsHolder    @relation(fields: [rightsHolderId], references: [id])
+  createdAt      DateTime        @default(now())
+
+  @@index([trackId])
+}
+
+model SpotifyArtistCache {
+  artistId   String   @id
+  name       String
+  image      String?
+  followers  Int
+  popularity Int
+  tracks     Json
+  updatedAt  DateTime @updatedAt
+}
+
+model CodeSequence {
+  id         String   @id @default(cuid())
+  type       String // "ISRC" | "UPC"
+  year       Int?
+  lastNumber Int
+  createdAt  DateTime @default(now())
+}
+
+model DSPDelivery {
+  id        String    @id @default(cuid())
+  releaseId String
+  dsp       Platform
+  status    String // PENDING | SENT | FAILED
+  sentAt    DateTime?
+  error     String?
+  createdAt DateTime  @default(now())
+
+  release Release @relation(fields: [releaseId], references: [id], onDelete: Cascade)
+
+  @@unique([releaseId, dsp])
+  @@index([releaseId])
+}
+
+model RoyaltyUsage {
+  id String @id @default(cuid())
+
+  isrc      String
+  trackId   String?
+  releaseId String?
+
+  platform Platform
+  country  String
+
+  streams  Int
+  revenue  Float
+  currency String
+
+  processed Boolean @default(false)
+
+  reportMonth DateTime
+
+  createdAt DateTime @default(now())
+
+  track           Track?           @relation(fields: [trackId], references: [id])
+  release         Release?         @relation(fields: [releaseId], references: [id])
+  royaltyEarnings RoyaltyEarning[]
+
+  @@index([isrc])
+  @@index([reportMonth])
+}
+
+model RoyaltyEarning {
+  id String @id @default(cuid())
+
+  usageId String?
+  trackId String
+  rightsHolderId String
+
+  platform Platform?
+  pro PRO?
+  source String?
+
+  streams Int
+  revenue Float
+
+  share Float
+  amount Float
+
+  reportMonth DateTime
+
+  createdAt DateTime @default(now())
+
+  usage        RoyaltyUsage? @relation(fields: [usageId], references: [id])
+  track        Track        @relation(fields: [trackId], references: [id])
+  rightsHolder RightsHolder @relation(fields: [rightsHolderId], references: [id])
+
+  kind RoyaltyKind @default(MASTER)
+
+  @@index([trackId])
+  @@index([rightsHolderId])
+  @@index([reportMonth])
+
+  @@unique([trackId, rightsHolderId, reportMonth, kind, platform, pro])
+}
+
+model ProducerReport {
+
+  id String @id @default(cuid())
+
+  isrc String
+  trackTitle String
+  producerIpi String?
+
+  streams Int
+  revenue Float
+
+  currency String
+  territory String
+
+  reportMonth DateTime
+
+  processed Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  @@index([isrc])
+  @@index([producerIpi])
+}
+
+model PublishingReport {
+
+  id String @id @default(cuid())
+
+  iswc String?
+  workTitle String
+
+  rightsHolderIpi String?
+
+  streams Int
+  revenue Float
+
+  currency String
+  territory String
+
+  reportMonth DateTime
+
+  processed Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  @@index([iswc])
+  @@index([rightsHolderIpi])
+  @@index([reportMonth])
+  @@index([processed, reportMonth])
+
+}
