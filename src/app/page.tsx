@@ -49,7 +49,7 @@ export default function Home() {
             royalties automáticamente desde un único panel.
           </p>
 
-          <div className="flex gap-md" style={{ width: "100%" }}>
+          <div className="flex flex-mobile-col gap-md" style={{ width: "100%" }}>
             <Link href="/login" className="btn btn-secondary btn-block">
               Inicia Sesión
             </Link>

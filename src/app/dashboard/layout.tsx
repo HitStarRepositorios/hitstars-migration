@@ -22,7 +22,7 @@ export default async function DashboardLayout({
     where: { id: session.id },
     include: {
       kyc: true,
-      artist: true, // 🔥 AÑADE ESTO
+      artist: true,
     },
   });
 
@@ -50,9 +50,9 @@ export default async function DashboardLayout({
           width: "100%",
         }}
       >
-        {/* Header */}
+        {/* ── Header ── */}
         <header
-          className="glass-panel"
+          className="glass-panel dashboard-header"
           style={{
             borderRadius: 0,
             padding: "1rem 2rem",
@@ -60,31 +60,37 @@ export default async function DashboardLayout({
             justifyContent: "space-between",
             alignItems: "center",
             width: "100%",
+            position: "sticky",
+            top: 0,
+            zIndex: 50,
           }}
         >
-          <h2 className="text-gradient" style={{ margin: 0 }}>
+          <h2 className="text-gradient" style={{ margin: 0, fontSize: "clamp(1.1rem, 4vw, 1.6rem)" }}>
             Hit Star Portal
           </h2>
 
-          <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
-            <span className="text-secondary text-sm">
+          <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
+            {/* Email: hidden on mobile */}
+            <span className="text-secondary text-sm hide-mobile">
               {session.email}
             </span>
 
             <form action={logoutAction}>
-              <button type="submit" className="btn btn-secondary">
+              <button type="submit" className="btn btn-secondary btn-sm">
                 Salir
               </button>
             </form>
           </div>
         </header>
 
-        {/* 🔔 KYC Banner */}
+        {/* ── KYC Banner ── */}
         {showKycBanner && (
           <div
+            className="kyc-banner"
             style={{
               maxWidth: "1200px",
               margin: "1.5rem auto 0 auto",
+              width: "calc(100% - 2rem)",
               padding: "1rem 1.5rem",
               borderRadius: "12px",
               background:
@@ -132,7 +138,7 @@ export default async function DashboardLayout({
               <Link
                 href="/dashboard/kyc"
                 className="btn btn-primary"
-                style={{ whiteSpace: "nowrap" }}
+                style={{ whiteSpace: "nowrap", flexShrink: 0 }}
               >
                 {kycStatus === "REJECTED"
                   ? "Reenviar documentación"
@@ -141,8 +147,10 @@ export default async function DashboardLayout({
             )}
           </div>
         )}
-        {/* Content */}
+
+        {/* ── Content row ── */}
         <div
+          className="dashboard-content"
           style={{
             flex: 1,
             display: "flex",
@@ -153,45 +161,38 @@ export default async function DashboardLayout({
             padding: "2rem 1rem",
           }}
         >
-          {/* Sidebar */}
-          <aside
-            style={{
-              width: "250px",
-              display: "flex",
-              flexDirection: "column",
-              gap: "1rem",
-            }}
-          >
+          {/* ── Sidebar (desktop only) ── */}
+          <aside className="sidebar-desktop sticky top-6 h-fit">
             <Link
               href="/dashboard"
               className="glass-panel glass-panel-interactive"
-              style={{ padding: "1rem" }}
+              style={{ padding: "1rem", display: "flex", alignItems: "center", gap: "0.6rem" }}
             >
-              Resumen
+              🏠 Resumen
             </Link>
 
             <Link
               href="/dashboard/releases"
               className="glass-panel glass-panel-interactive"
-              style={{ padding: "1rem" }}
+              style={{ padding: "1rem", display: "flex", alignItems: "center", gap: "0.6rem" }}
             >
-              Lanzamientos
+              🎵 Lanzamientos
             </Link>
 
             <Link
               href="/dashboard/analytics"
               className="glass-panel glass-panel-interactive"
-              style={{ padding: "1rem" }}
+              style={{ padding: "1rem", display: "flex", alignItems: "center", gap: "0.6rem" }}
             >
-              Estadísticas & Royalties
+              📊 Estadísticas & Royalties
             </Link>
 
             <Link
               href="/dashboard/kyc"
               className="glass-panel glass-panel-interactive"
-              style={{ padding: "1rem" }}
+              style={{ padding: "1rem", display: "flex", alignItems: "center", gap: "0.6rem" }}
             >
-              Verificación de identidad
+              🪪 Verificación de identidad
             </Link>
 
             {/* 👑 Admin Access */}
@@ -221,12 +222,42 @@ export default async function DashboardLayout({
             )}
           </aside>
 
-          {/* Main */}
-          <main style={{ flex: 1 }}>
+          {/* ── Main ── */}
+          <main className="dashboard-main" style={{ flex: 1, minWidth: 0 }}>
             {children}
           </main>
         </div>
       </div>
+
+      {/* ── Bottom Navigation (mobile only) ── */}
+      <nav className="bottom-nav" aria-label="Navegación principal">
+        <Link href="/dashboard" className="bottom-nav-item">
+          <span className="bottom-nav-icon">🏠</span>
+          Resumen
+        </Link>
+
+        <Link href="/dashboard/releases" className="bottom-nav-item">
+          <span className="bottom-nav-icon">🎵</span>
+          Lanzamientos
+        </Link>
+
+        <Link href="/dashboard/analytics" className="bottom-nav-item">
+          <span className="bottom-nav-icon">📊</span>
+          Royalties
+        </Link>
+
+        <Link href="/dashboard/kyc" className="bottom-nav-item">
+          <span className="bottom-nav-icon">🪪</span>
+          KYC
+        </Link>
+
+        {isAdmin && (
+          <Link href="/admin" className="bottom-nav-item">
+            <span className="bottom-nav-icon">👑</span>
+            Admin
+          </Link>
+        )}
+      </nav>
     </>
   );
 }

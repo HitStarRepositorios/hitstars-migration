@@ -567,3 +567,189 @@ tbody tr:hover {
   border-color: var(--accent-primary);
   box-shadow: 0 0 0 2px rgba(109,40,217,0.2);
 }
+
+/* ================================================ */
+/* RESPONSIVE — MOBILE FIRST                        */
+/* ================================================ */
+
+/* ---- Bottom Navigation (hidden by default) ------ */
+.bottom-nav {
+  display: none;
+}
+
+/* ---- Sidebar Desktop (always visible by default) - */
+.sidebar-desktop {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 250px;
+  flex-shrink: 0;
+}
+
+/* ---- Utility: hide/show per breakpoint ----------- */
+.hide-mobile {
+  display: initial;
+}
+
+.show-mobile {
+  display: none;
+}
+
+/* ---- Utility: flex column on mobile -------------- */
+.flex-mobile-col {
+  flex-direction: row; /* default desktop */
+}
+
+/* ================================================ */
+/* TABLET  ≤ 1024px                                 */
+/* ================================================ */
+@media (max-width: 1024px) {
+  .sidebar-desktop {
+    width: 200px;
+  }
+
+  .grid-cols-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .grid-cols-3 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* ================================================ */
+/* MOBILE  ≤ 768px                                  */
+/* ================================================ */
+@media (max-width: 768px) {
+
+  /* --- Typography scale-down ------------------- */
+  h1 { font-size: 2rem; }
+  h2 { font-size: 1.6rem; }
+  h3 { font-size: 1.25rem; }
+
+  /* --- Glass panel padding --------------------- */
+  .glass-panel {
+    padding: var(--spacing-lg);
+    border-radius: var(--radius-md);
+  }
+
+  /* --- Grids collapse to 1 col ---------------- */
+  .grid-cols-2,
+  .grid-cols-3,
+  .grid-cols-4 {
+    grid-template-columns: 1fr;
+  }
+
+  /* --- Flex utilities -------------------------- */
+  .flex-mobile-col {
+    flex-direction: column !important;
+  }
+
+  /* --- Hide/show toggles ---------------------- */
+  .hide-mobile {
+    display: none !important;
+  }
+
+  .show-mobile {
+    display: initial !important;
+  }
+
+  /* --- Sidebar: hidden on mobile --------------- */
+  .sidebar-desktop {
+    display: none !important;
+  }
+
+  /* --- Bottom Navigation ----------------------- */
+  .bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    background: rgba(14, 14, 20, 0.92);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(255, 255, 255, 0.07);
+    padding: 0.5rem 0 calc(0.5rem + env(safe-area-inset-bottom));
+    justify-content: space-around;
+    align-items: stretch;
+  }
+
+  .bottom-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.2rem;
+    padding: 0.4rem 0.5rem;
+    text-decoration: none;
+    color: var(--text-muted);
+    font-size: 0.65rem;
+    font-weight: 500;
+    border-radius: var(--radius-sm);
+    transition: color var(--transition-fast);
+    flex: 1;
+    text-align: center;
+    line-height: 1.2;
+  }
+
+  .bottom-nav-item:hover,
+  .bottom-nav-item.active {
+    color: var(--text-primary);
+  }
+
+  .bottom-nav-icon {
+    font-size: 1.25rem;
+    line-height: 1;
+  }
+
+  /* --- Main content: padding for bottom nav ---- */
+  .dashboard-main {
+    padding-bottom: 5rem !important;
+  }
+
+  /* --- Dashboard content area ----------------- */
+  .dashboard-content {
+    flex-direction: column !important;
+    gap: 0 !important;
+    padding: 1rem !important;
+  }
+
+  /* --- Header adjustments --------------------- */
+  .dashboard-header {
+    padding: 0.75rem 1rem !important;
+  }
+
+  /* --- KYC banner ----------------------------- */
+  .kyc-banner {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.75rem !important;
+    margin: 0.75rem !important;
+    border-radius: var(--radius-md) !important;
+  }
+
+  /* --- Tables scroll on mobile ---------------- */
+  .table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* --- Prevent horizontal overflow ------------ */
+  body {
+    overflow-x: hidden;
+  }
+
+  /* --- Form inputs full width ----------------- */
+  .form-input,
+  .form-select {
+    width: 100%;
+  }
+
+  /* --- Buttons: slightly smaller on mobile ---- */
+  .btn {
+    padding: 0.65rem 1.25rem;
+    font-size: 0.875rem;
+  }
+}
