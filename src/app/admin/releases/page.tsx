@@ -36,25 +36,28 @@ export default async function AdminReleasesPage() {
               <div
                 style={{
                   display: "flex",
-                  gap: "2rem",
-                  alignItems: "center",
+                  gap: "1rem",
+                  alignItems: "flex-start",
                   justifyContent: "space-between",
+                  flexWrap: "wrap",
                 }}
               >
                 {/* LEFT SIDE */}
                 <div
                   style={{
                     display: "flex",
-                    gap: "1.5rem",
-                    alignItems: "center",
+                    gap: "1rem",
+                    alignItems: "flex-start",
+                    flex: 1,
+                    minWidth: 0,
                   }}
                 >
                   {/* COVER */}
                   <div
                     style={{
-                      width: 80,
-                      height: 80,
-                      borderRadius: 12,
+                      width: 72,
+                      height: 72,
+                      borderRadius: 10,
                       overflow: "hidden",
                       background: "rgba(255,255,255,0.05)",
                       flexShrink: 0,
@@ -74,22 +77,19 @@ export default async function AdminReleasesPage() {
                   </div>
 
                   {/* INFO */}
-                  <div>
-                    <h3 style={{ margin: 0 }}>
+                  <div style={{ minWidth: 0 }}>
+                    <h3 style={{ margin: 0, wordBreak: "break-word" }}>
                       {release.title}
                     </h3>
 
-                    <p className="text-secondary mt-sm">
+                    <p className="text-secondary mt-sm" style={{ fontSize: "0.88rem" }}>
                       Por{" "}
                       {release.artist.user.name ??
                         release.artist.user.email}
                     </p>
 
                     <p className="text-sm text-muted">
-                      Sello: {release.label} • Fecha:{" "}
-                      {new Date(
-                        release.releaseDate
-                      ).toLocaleDateString()}{" "}
+                      Sello: {release.label} • {new Date(release.releaseDate).toLocaleDateString()}{" "}
                       • {release.tracks.length} track(s)
                     </p>
                   </div>
@@ -100,7 +100,8 @@ export default async function AdminReleasesPage() {
                   style={{
                     display: "flex",
                     alignItems: "center",
-                    gap: "1rem",
+                    gap: "0.75rem",
+                    flexShrink: 0,
                   }}
                 >
                   <span
@@ -111,6 +112,7 @@ export default async function AdminReleasesPage() {
                       background: "rgba(245, 158, 11, 0.15)",
                       color: "#f59e0b",
                       fontWeight: 600,
+                      whiteSpace: "nowrap",
                     }}
                   >
                     PENDING
@@ -119,9 +121,7 @@ export default async function AdminReleasesPage() {
                   <Link
                     href={`/admin/releases/${release.id}`}
                     className="btn btn-primary"
-                    style={{
-                      padding: "0.6rem 1.2rem",
-                    }}
+                    style={{ padding: "0.6rem 1.2rem", whiteSpace: "nowrap" }}
                   >
                     Revisar
                   </Link>

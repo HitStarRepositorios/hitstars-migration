@@ -76,106 +76,123 @@ export default function AdminWithdrawalsPage() {
   if (loading) {
     return <div className="glass-panel p-8">Loading...</div>
   }
-
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 420px), 1fr))",
+        gap: "1.5rem",
+        alignItems: "start",
+      }}
+    >
 
-      <div className="lg:col-span-2 glass-panel p-8 space-y-6">
-        <h1 className="text-3xl font-semibold">Payout Requests</h1>
+      {/* ── Lista de solicitudes ── */}
+      <div className="glass-panel" style={{ padding: "1.5rem" }}>
+        <h1 style={{ fontSize: "clamp(1.2rem, 4vw, 1.75rem)", fontWeight: 600, marginBottom: "1.25rem" }}>
+          Payout Requests
+        </h1>
 
-        <table className="w-full text-sm">
-          <thead className="border-b border-white/10 text-muted">
-            <tr>
-              <th className="text-left py-4">Artist</th>
-              <th className="text-left py-4">Amount</th>
-              <th className="text-left py-4">Status</th>
-              <th className="text-left py-4">Date</th>
-              <th className="text-right py-4">Action</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-white/5">
-            {withdrawals.map(w => (
-              <tr key={w.id} className="hover:bg-white/5 transition">
-                <td className="py-4">
-                  <div className="font-medium text-white">{w.user.name || "Sin nombre"}</div>
-                  <div className="text-muted text-xs">{w.user.email}</div>
-                </td>
-                <td className="py-4 font-semibold text-lg text-primary">
-                  €{Math.abs(w.amount).toFixed(2)}
-                </td>
-                <td className="py-4">
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    w.status === 'PAID' ? 'bg-green-500/20 text-green-400' : 
-                    w.status === 'PENDING' ? 'bg-yellow-500/20 text-yellow-400' : 
-                    'bg-red-500/20 text-red-400'
-                  }`}>
-                    {w.status}
-                  </span>
-                </td>
-                <td className="py-4 text-muted">
-                  {new Date(w.createdAt).toLocaleDateString("es-ES")}
-                </td>
-                <td className="py-4 text-right">
-                  <button 
-                    onClick={() => setSelected(w)}
-                    className="btn btn-secondary py-1 text-xs"
-                  >
-                    Review
-                  </button>
-                </td>
+        <div className="table-wrapper">
+          <table style={{ width: "100%", fontSize: "0.85rem" }}>
+            <thead style={{ borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
+              <tr>
+                <th style={{ textAlign: "left", padding: "0.75rem 0.5rem", color: "var(--text-muted)", fontWeight: 600 }}>Artista</th>
+                <th style={{ textAlign: "left", padding: "0.75rem 0.5rem", color: "var(--text-muted)", fontWeight: 600 }}>Importe</th>
+                <th style={{ textAlign: "left", padding: "0.75rem 0.5rem", color: "var(--text-muted)", fontWeight: 600 }}>Estado</th>
+                <th style={{ textAlign: "left", padding: "0.75rem 0.5rem", color: "var(--text-muted)", fontWeight: 600, whiteSpace: "nowrap" }}>Fecha</th>
+                <th style={{ textAlign: "right", padding: "0.75rem 0.5rem", color: "var(--text-muted)", fontWeight: 600 }}>Acción</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {withdrawals.map(w => (
+                <tr key={w.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                  <td style={{ padding: "0.75rem 0.5rem" }}>
+                    <div style={{ fontWeight: 500, color: "white", whiteSpace: "nowrap" }}>{w.user.name || "Sin nombre"}</div>
+                    <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>{w.user.email}</div>
+                  </td>
+                  <td style={{ padding: "0.75rem 0.5rem", fontWeight: 600, whiteSpace: "nowrap" }}>
+                    €{Math.abs(w.amount).toFixed(2)}
+                  </td>
+                  <td style={{ padding: "0.75rem 0.5rem" }}>
+                    <span style={{
+                      padding: "0.2rem 0.6rem",
+                      borderRadius: "999px",
+                      fontSize: "0.7rem",
+                      fontWeight: 600,
+                      whiteSpace: "nowrap",
+                      background: w.status === "PAID" ? "rgba(34,197,94,0.15)" : w.status === "PENDING" ? "rgba(234,179,8,0.15)" : "rgba(239,68,68,0.15)",
+                      color: w.status === "PAID" ? "#4ade80" : w.status === "PENDING" ? "#facc15" : "#f87171",
+                    }}>
+                      {w.status}
+                    </span>
+                  </td>
+                  <td style={{ padding: "0.75rem 0.5rem", color: "var(--text-muted)", whiteSpace: "nowrap" }}>
+                    {new Date(w.createdAt).toLocaleDateString("es-ES")}
+                  </td>
+                  <td style={{ padding: "0.75rem 0.5rem", textAlign: "right" }}>
+                    <button
+                      onClick={() => setSelected(w)}
+                      className="btn btn-secondary btn-sm"
+                    >
+                      Review
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      {/* DETALLE DE REVISIÓN */}
-      <div className="glass-panel p-8 space-y-6 relative overflow-hidden flex flex-col h-fit sticky top-6">
+      {/* ── Panel de detalle ── */}
+      <div className="glass-panel" style={{ padding: "1.5rem" }}>
         {selected ? (
           <>
-            <div className="flex justify-between items-center mb-2">
-              <h2 className="text-2xl font-bold text-white">Review Request</h2>
-              <button 
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+              <h2 style={{ fontSize: "1.25rem", fontWeight: 700 }}>Review Request</h2>
+              <button
                 onClick={() => setSelected(null)}
-                className="text-muted hover:text-white transition text-xs border border-white/10 px-2 py-1 rounded"
+                style={{ fontSize: "0.75rem", border: "1px solid rgba(255,255,255,0.1)", padding: "0.25rem 0.5rem", borderRadius: "6px", background: "transparent", color: "var(--text-muted)", cursor: "pointer" }}
               >
-                Close ✕
+                Cerrar ✕
               </button>
             </div>
-            
-            <div className="p-6 bg-white/5 border border-white/10 rounded-2xl space-y-4 shadow-inner">
-              <div className="flex justify-between items-baseline">
-                <span className="text-muted text-sm italic">Total Generado Histórico:</span>
-                <span className="font-bold text-white text-lg">€{selected.user.totalEarned.toFixed(2)}</span>
+
+            <div style={{ padding: "1rem", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "12px", marginBottom: "1rem" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "0.5rem" }}>
+                <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>Total Generado Histórico:</span>
+                <span style={{ fontWeight: 700 }}>€{selected.user.totalEarned.toFixed(2)}</span>
               </div>
-              <div className="flex justify-between items-baseline">
-                <span className="text-muted text-sm italic">Balance Disponible Actual:</span>
-                <span className="font-bold text-green-400 text-lg">€{selected.user.availableBalance.toFixed(2)}</span>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "0.5rem" }}>
+                <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>Balance Disponible:</span>
+                <span style={{ fontWeight: 700, color: "#4ade80" }}>€{selected.user.availableBalance.toFixed(2)}</span>
               </div>
-              <div className="border-t border-white/10 pt-4 flex justify-between items-center">
-                <span className="text-white font-black uppercase tracking-tighter">Monto Solicitado:</span>
-                <span className="font-black text-2xl text-primary drop-shadow-[0_0_10px_rgba(219,39,119,0.3)]">
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: "0.75rem" }}>
+                <span style={{ fontWeight: 700, textTransform: "uppercase", fontSize: "0.85rem" }}>Monto Solicitado:</span>
+                <span style={{ fontWeight: 900, fontSize: "1.4rem", color: "var(--accent-secondary)" }}>
                   €{Math.abs(selected.amount).toFixed(2)}
                 </span>
               </div>
             </div>
 
-            <div className="space-y-4 flex-1 flex flex-col min-h-0">
-              <div className="flex justify-between items-center">
-                <h3 className="text-xs font-black text-muted uppercase tracking-[0.2em]">Historial Completo</h3>
-                <span className="text-[10px] text-muted-foreground bg-white/5 px-2 py-0.5 rounded-full">
+            <div style={{ marginBottom: "1rem" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
+                <h3 style={{ fontSize: "0.7rem", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.15em" }}>Historial Completo</h3>
+                <span style={{ fontSize: "0.65rem", color: "var(--text-muted)", background: "rgba(255,255,255,0.05)", padding: "0.15rem 0.5rem", borderRadius: "999px" }}>
                   {selected.user.royaltyTransactions.length} registros
                 </span>
               </div>
-              
-              <div className="space-y-2 overflow-y-auto max-h-[350px] pr-2 custom-scrollbar">
+
+              <div style={{ maxHeight: "280px", overflowY: "auto" }} className="custom-scrollbar">
                 {selected.user.royaltyTransactions.map((t: any) => (
-                  <div key={t.id} className="flex justify-between items-center text-xs p-3 bg-white/[0.02] border border-white/[0.05] rounded-xl hover:bg-white/[0.05] transition group">
-                    <div className="flex flex-col">
-                      <span className="text-white font-medium group-hover:text-primary transition">{t.type}</span>
-                      <span className="text-[10px] text-muted">{new Date(t.createdAt).toLocaleDateString("es-ES")} • {t.status}</span>
+                  <div key={t.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "0.8rem", padding: "0.6rem 0.75rem", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)", borderRadius: "8px", marginBottom: "0.4rem" }}>
+                    <div>
+                      <div style={{ fontWeight: 500 }}>{t.type}</div>
+                      <div style={{ fontSize: "0.65rem", color: "var(--text-muted)" }}>
+                        {new Date(t.createdAt).toLocaleDateString("es-ES")} · {t.status}
+                      </div>
                     </div>
-                    <span className={`font-bold text-sm ${t.amount > 0 ? "text-green-400" : "text-red-400"}`}>
+                    <span style={{ fontWeight: 700, color: t.amount > 0 ? "#4ade80" : "#f87171" }}>
                       {t.amount > 0 ? "+" : ""}€{Math.abs(t.amount).toFixed(2)}
                     </span>
                   </div>
@@ -183,27 +200,31 @@ export default function AdminWithdrawalsPage() {
               </div>
             </div>
 
-            {selected.status === 'PENDING' && (
-              <div className="flex flex-col gap-4 pt-6 border-t border-white/10 mt-auto">
+            {selected.status === "PENDING" && (
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem", borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: "1rem" }}>
                 <button
                   onClick={() => action(selected.id, "APPROVE")}
-                  className="btn btn-primary w-full py-4 text-base shadow-[0_0_20px_rgba(219,39,119,0.2)] hover:shadow-[0_0_30px_rgba(219,39,119,0.4)]"
+                  className="btn btn-primary"
+                  style={{ width: "100%", padding: "0.85rem" }}
                 >
-                  Confirm & Approve Payout
+                  ✅ Confirm & Approve Payout
                 </button>
                 <button
                   onClick={() => action(selected.id, "REJECT")}
-                  className="btn btn-red w-full py-3 hover:bg-red-500/30"
+                  className="btn btn-red"
+                  style={{ width: "100%", padding: "0.75rem" }}
                 >
-                  Reject & Refund Balance
+                  ❌ Reject & Refund Balance
                 </button>
               </div>
             )}
           </>
         ) : (
-          <div className="h-[500px] flex flex-col items-center justify-center text-muted text-center p-8">
-            <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mb-4 text-2xl opacity-20">📊</div>
-            <p className="italic text-sm">Selecciona una solicitud para auditar el historial financiero y procesar el pago.</p>
+          <div style={{ minHeight: "200px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", color: "var(--text-muted)", textAlign: "center", padding: "2rem" }}>
+            <div style={{ fontSize: "2rem", opacity: 0.2, marginBottom: "0.75rem" }}>📊</div>
+            <p style={{ fontSize: "0.85rem", fontStyle: "italic" }}>
+              Selecciona una solicitud para auditar el historial financiero y procesar el pago.
+            </p>
           </div>
         )}
       </div>
