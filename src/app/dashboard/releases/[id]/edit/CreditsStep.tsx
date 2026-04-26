@@ -1348,6 +1348,7 @@ function SplitSection({
             <div
               style={{
                 display: "flex",
+                flexWrap: "wrap",
                 gap: "1rem",
                 alignItems: "center",
                 marginBottom: "0.75rem",
@@ -1544,7 +1545,7 @@ function SplitSection({
                   marginLeft: "2rem",
                   marginBottom: "1rem",
                   display: "grid",
-                  gridTemplateColumns: "repeat(3,1fr)",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
                   gap: "0.75rem"
                 }}
               >
@@ -1693,7 +1694,7 @@ function SplitSection({
                   marginLeft: "2rem",
                   marginBottom: "1rem",
                   display: "grid",
-                  gridTemplateColumns: "repeat(3,1fr)",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
                   gap: "0.75rem"
                 }}
               >
@@ -1892,7 +1893,7 @@ function SplitSection({
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: type === "MASTER" ? "1fr 1fr" : "1fr",
+            gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
             gap: "2rem",
             marginTop: "1.5rem"
           }}
