@@ -8,6 +8,7 @@ import {
   ResponsiveContainer,
   BarChart,
   Bar,
+  XAxis,
   YAxis,
   CartesianGrid
 } from "recharts"
