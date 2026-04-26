@@ -8,10 +8,10 @@ import {
   ResponsiveContainer,
   BarChart,
   Bar,
-  XAxis,
   YAxis,
   CartesianGrid
 } from "recharts"
+import Image from "next/image"
 
 type Transaction = {
   track: string
@@ -20,97 +20,7 @@ type Transaction = {
   amount: number
 }
 
-const DSP_NAMES: Record<string, string> = {
-
-  SPOTIFY: "Spotify",
-  APPLE_MUSIC: "Apple Music",
-  AMAZON: "Amazon Music",
-  YOUTUBE: "YouTube",
-  YOUTUBE_MUSIC: "YouTube Music",
-  DEEZER: "Deezer",
-  TIDAL: "TIDAL",
-  SOUNDCLOUD: "SoundCloud",
-  PANDORA: "Pandora",
-
-  TENCENT: "Tencent Music",
-  NETEASE: "NetEase Cloud Music",
-  QQ_MUSIC: "QQ Music",
-  KUGOU: "KuGou Music",
-  KUWO: "KuWo Music",
-
-  GAANA: "Gaana",
-  JIOSAAVN: "JioSaavn",
-
-  BOOMPLAY: "Boomplay",
-  ANGHAMI: "Anghami",
-  AUDIOMACK: "Audiomack",
-
-  SNAPCHAT: "Snapchat",
-  TIKTOK: "TikTok",
-  INSTAGRAM: "Instagram",
-  FACEBOOK: "Facebook",
-
-  RESSO: "Resso",
-  CAPCUT: "CapCut",
-
-  SHAZAM: "Shazam",
-
-  BEATPORT: "Beatport",
-  TRAXSOURCE: "Traxsource",
-
-  VEVO: "VEVO",
-  NAPSTER: "Napster",
-
-  PRODUCER: "Agedi",
-  PUBLISHING: "SGAE",
-
-}
-
-const DSP_COLORS: Record<string, string> = {
-
-  SPOTIFY: "#1DB954",
-  APPLE_MUSIC: "#FA243C",
-  AMAZON: "#00A8E1",
-  YOUTUBE: "#FF0000",
-  YOUTUBE_MUSIC: "#FF0000",
-  DEEZER: "#A238FF",
-  TIDAL: "#000000",
-  SOUNDCLOUD: "#FF7700",
-  PANDORA: "#3668FF",
-
-  TENCENT: "#0066FF",
-  NETEASE: "#D43C33",
-  QQ_MUSIC: "#31C27C",
-  KUGOU: "#00A6FF",
-  KUWO: "#FFD200",
-
-  GAANA: "#E72C30",
-  JIOSAAVN: "#1DB954",
-
-  BOOMPLAY: "#00C853",
-  ANGHAMI: "#7B00FF",
-  AUDIOMACK: "#FFA200",
-
-  SNAPCHAT: "#FFFC00",
-  TIKTOK: "#000000",
-  INSTAGRAM: "#E1306C",
-  FACEBOOK: "#1877F2",
-
-  RESSO: "#F50057",
-  CAPCUT: "#000000",
-
-  SHAZAM: "#0088FF",
-
-  BEATPORT: "#00FF99",
-  TRAXSOURCE: "#FF6600",
-
-  VEVO: "#FF0000",
-  NAPSTER: "#2D2D2D",
-
-  PRODUCER: "#22c55e",
-  PUBLISHING: "#9333ea",
-
-}
+import { DSP_NAMES, DSP_COLORS, DSP_LOGOS } from "@/lib/platforms"
 
 export default function RoyaltyCharts({ transactions }: { transactions: Transaction[] }) {
 
@@ -211,7 +121,28 @@ export default function RoyaltyCharts({ transactions }: { transactions: Transact
 
             <YAxis stroke="#9ca3af" />
 
-            <Tooltip />
+            <Tooltip
+              content={({ active, payload }) => {
+                if (!active || !payload?.length) return null;
+                const item = payload[0].payload;
+                return (
+                  <div className="glass-panel" style={{ padding: "0.6rem" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      {DSP_LOGOS[item.platform] && (
+                        <Image
+                          src={DSP_LOGOS[item.platform]}
+                          alt={item.platform}
+                          width={20}
+                          height={20}
+                        />
+                      )}
+                      <strong>{DSP_NAMES[item.platform] || item.platform}</strong>
+                    </div>
+                    <div className="mt-1">Revenue: €{item.amount.toFixed(2)}</div>
+                  </div>
+                );
+              }}
+            />
 
             <Bar dataKey="amount">
               {platformData.map((entry, index) => (

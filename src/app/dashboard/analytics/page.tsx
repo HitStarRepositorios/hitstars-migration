@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import RoyaltyTable from "@/components/analytics/RoyaltyTable"
 import RoyaltyCharts from "@/components/analytics/RoyaltyCharts"
 import TopTracks from "@/components/analytics/TopTracks"
+import { DSP_NAMES } from "@/lib/platforms"
 
 
 export default function AnalyticsPage() {
@@ -225,9 +226,9 @@ if (typeFilter !== "ALL") {
               style={{ width: "200px" }}
             >
               <option value="ALL">All Platforms</option>
-              <option value="SPOTIFY">Spotify</option>
-              <option value="APPLE_MUSIC">Apple Music</option>
-              <option value="YOUTUBE">YouTube</option>
+              {Object.entries(DSP_NAMES).map(([key, name]) => (
+                <option key={key} value={key}>{name}</option>
+              ))}
             </select>
 
             <select

@@ -10,6 +10,8 @@ import {
 
 import { useState, useMemo } from "react"
 import Badge from "@/components/ui/Badge"
+import { DSP_NAMES, DSP_LOGOS } from "@/lib/platforms"
+import Image from "next/image"
 
 type Transaction = {
   id: string
@@ -46,17 +48,32 @@ export default function RoyaltyTable({ data }: { data: Transaction[] }) {
       cell: info => {
 
         const platform = info.getValue<string>()
-
-        if (platform === "SPOTIFY")
-          return <Badge color="green">Spotify</Badge>
-
-        if (platform === "APPLE_MUSIC")
-          return <Badge color="gray">Apple Music</Badge>
-
-        if (platform === "YOUTUBE")
-          return <Badge color="red">YouTube</Badge>
-
-        return <Badge>{platform}</Badge>
+        const name = DSP_NAMES[platform] || platform
+        const logo = DSP_LOGOS[platform]
+        
+        let color = "gray"
+        if (platform === "SPOTIFY") color = "green"
+        else if (platform === "YOUTUBE" || platform === "YOUTUBE_MUSIC") color = "red"
+        else if (platform === "APPLE_MUSIC") color = "gray"
+        else if (platform === "DEEZER" || platform === "TIDAL") color = "purple"
+        else if (platform === "AMAZON") color = "blue"
+        
+        return (
+          <Badge color={color as any}>
+            <div className="flex items-center gap-1.5">
+              {logo && (
+                <Image 
+                  src={logo} 
+                  alt={platform} 
+                  width={14} 
+                  height={14} 
+                  style={{ borderRadius: "2px", objectFit: "contain" }}
+                />
+              )}
+              {name}
+            </div>
+          </Badge>
+        )
       }
     },
 
