@@ -203,14 +203,16 @@ export default function TracksStep({ release }: any) {
       if (!workerUrl.endsWith("/")) workerUrl = `${workerUrl}/`;
     }
 
+    const workerToken = process.env.NEXT_PUBLIC_R2_WORKER_TOKEN || "";
+
     return rawTracks.map((t: Track) => {
       let proxiedUrl = undefined;
       if (t.fileUrl && workerUrl) {
         const audioIndex = t.fileUrl.indexOf("/audio/");
         if (audioIndex !== -1) {
           const key = t.fileUrl.substring(audioIndex + 1);
-          // Añadir un cache-buster para evitar que el navegador use una respuesta fallida cacheada
-          proxiedUrl = `${workerUrl}?key=${encodeURIComponent(key)}&t=${Date.now()}`;
+          // Añadir el token y un cache-buster
+          proxiedUrl = `${workerUrl}?key=${encodeURIComponent(key)}&token=${workerToken}&t=${Date.now()}`;
         }
       }
 

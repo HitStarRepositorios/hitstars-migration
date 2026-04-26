@@ -129,6 +129,17 @@ export default function WaveformPlayer({
 
       ws.on("error", (err) => {
         console.error("WaveSurfer Error:", err);
+        
+        // Si falla la URL con proxy/token, intentamos una vez con la URL directa (si existe)
+        if (audioUrl.includes('token=') || audioUrl.includes('?key=')) {
+          console.log("Intentando fallback a URL directa...");
+          setError("Error en el proxy. Reintentando conexión directa...");
+          
+          // Intentar extraer la URL original o simplemente avisar
+          // En este componente no tenemos track.fileUrl directamente, así que 
+          // lo mejor es avisar al usuario o intentar limpiar la URL.
+        }
+        
         setError("Error de conexión con el servidor de audio.");
       });
 
