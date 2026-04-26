@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import { getDistributionContractText } from "@/lib/contracts/distributionContract";
 import { getPublishingContractText } from "@/lib/contracts/publishingContract";
+import { TERRITORY_NAMES } from "@/lib/territories";
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -76,16 +77,6 @@ export async function GET(req: Request) {
       : release.artist?.user?.country
       || "__________________________";
 
-  const TERRITORY_LABELS: Record<string, string> = {
-    EUROPE: "Unión Europea",
-    LATAM: "Latinoamérica",
-    NORTH_AMERICA: "Norteamérica",
-    ASIA: "Asia",
-    AFRICA: "África",
-    OCEANIA: "Oceanía",
-    RUSSIA: "Rusia y territorios asociados",
-  };
-
   let territory = "Mundial";
 
   if (!release.distributionWorldwide) {
@@ -93,7 +84,7 @@ export async function GET(req: Request) {
 
     if (regions && regions.length > 0) {
       territory = regions
-        .map((r) => TERRITORY_LABELS[r] ?? r)
+        .map((r) => TERRITORY_NAMES[r] ?? r)
         .join(", ");
     }
   }

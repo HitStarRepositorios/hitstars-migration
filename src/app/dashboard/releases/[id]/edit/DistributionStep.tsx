@@ -4,6 +4,7 @@ import { useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import InteractiveWorldMap from "@/components/InteractiveWorldMap";
 import { Platform } from "@prisma/client";
+import { ALL_COUNTRIES, REGIONS, TERRITORY_NAMES } from "@/lib/territories";
 
 interface Props {
   release: any;
@@ -46,32 +47,35 @@ const PLATFORMS: {
   { id: "TRAXSOURCE", label: "Traxsource", logo: "/logos/traxsource.png" }
 ];
 
-
-
-
-const ALL_REGIONS = [
-  "EUROPE",
-  "LATAM",
-  "NORTH_AMERICA",
-  "ASIA",
-  "AFRICA",
-  "OCEANIA",
-  "RUSSIA"
+const CONTINENT_BUTTONS = [
+  { id: "EUROPE", label: "Europa" },
+  { id: "LATAM", label: "América Latina" },
+  { id: "NORTH_AMERICA", label: "Norteamérica" },
+  { id: "ASIA", label: "Asia" },
+  { id: "AFRICA", label: "África" },
+  { id: "OCEANIA", label: "Oceanía" },
+  { id: "RUSSIA", label: "Rusia" }
 ];
 
 export default function DistributionStep({ release }: Props) {
-
   const router = useRouter();
 
-
-
-const [selectedPlatforms, setSelectedPlatforms] = useState<Platform[]>(
-  release.distributionPlatforms || []
-)
-
-  const [selectedTerritories, setSelectedTerritories] = useState<string[]>(
-    release.distributionTerritories || []
+  const [selectedPlatforms, setSelectedPlatforms] = useState<Platform[]>(
+    release.distributionPlatforms || []
   );
+
+  const [selectedTerritories, setSelectedTerritories] = useState<string[]>(() => {
+    const initial = release.distributionTerritories || [];
+    const normalized = new Set<string>();
+    initial.forEach((t: string) => {
+      if (REGIONS[t as keyof typeof REGIONS]) {
+        REGIONS[t as keyof typeof REGIONS].forEach((id: string) => normalized.add(id));
+      } else {
+        normalized.add(t);
+      }
+    });
+    return Array.from(normalized);
+  });
 
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -88,6 +92,25 @@ const [selectedPlatforms, setSelectedPlatforms] = useState<Platform[]>(
         ? prev.filter((t) => t !== id)
         : [...prev, id]
     );
+  }, []);
+
+  const toggleRegion = useCallback((regionId: string) => {
+    setTouched(true);
+    const regionCountries = REGIONS[regionId as keyof typeof REGIONS] || [];
+    
+    setSelectedTerritories((prev) => {
+      // Si todos los países de la región ya están seleccionados, los quitamos
+      const allSelected = regionCountries.every(id => prev.includes(id));
+      
+      if (allSelected) {
+        return prev.filter(id => !regionCountries.includes(id));
+      } else {
+        // Añadimos los que falten
+        const newSelected = new Set(prev);
+        regionCountries.forEach(id => newSelected.add(id));
+        return Array.from(newSelected);
+      }
+    });
   }, []);
 
   const togglePlatform = useCallback((id: Platform) => {
@@ -126,15 +149,12 @@ const [selectedPlatforms, setSelectedPlatforms] = useState<Platform[]>(
           distribution: {
             platforms: selectedPlatforms,
             territories: selectedTerritories,
-            worldwide:
-              selectedTerritories.length === ALL_REGIONS.length,
+            worldwide: selectedTerritories.length >= ALL_COUNTRIES.length,
           },
         }),
       });
 
-      // 🔥 Fuerza actualización del Server Component
       router.refresh();
-
       setSaved(true);
     } catch (error) {
       console.error("Error guardando distribución:", error);
@@ -230,25 +250,79 @@ const [selectedPlatforms, setSelectedPlatforms] = useState<Platform[]>(
           <input
             type="checkbox"
             checked={
-              selectedTerritories.length === ALL_REGIONS.length
+              selectedTerritories.length >= ALL_COUNTRIES.length
             }
             onChange={(e) => {
               setTouched(true);
               if (e.target.checked) {
-                setSelectedTerritories(ALL_REGIONS);
+                setSelectedTerritories(ALL_COUNTRIES);
               } else {
                 setSelectedTerritories([]);
               }
             }}
           />
-          Distribución mundial
+          Distribución mundial ({ALL_COUNTRIES.length} países)
         </label>
+
+        {/* CONTROLES POR CONTINENTE */}
+        <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginTop: "1rem" }}>
+          {CONTINENT_BUTTONS.map((btn) => {
+            const regionCountries = REGIONS[btn.id as keyof typeof REGIONS] || [];
+            const allSelected = regionCountries.every(id => selectedTerritories.includes(id));
+            
+            return (
+              <button
+                key={btn.id}
+                onClick={() => toggleRegion(btn.id)}
+                className={`btn ${allSelected ? 'btn-primary' : 'btn-secondary'}`}
+                style={{ fontSize: "0.8rem", padding: "0.4rem 0.8rem" }}
+              >
+                {btn.label} {allSelected && "✓"}
+              </button>
+            );
+          })}
+        </div>
 
         <InteractiveWorldMap
           selectedTerritories={selectedTerritories}
           toggleTerritory={toggleTerritory}
-          worldwide={selectedTerritories.length === ALL_REGIONS.length}
+          worldwide={selectedTerritories.length >= ALL_COUNTRIES.length}
         />
+
+        {/* LISTA COMPACTA DE PAÍSES SELECCIONADOS */}
+        {selectedTerritories.length > 0 && selectedTerritories.length < ALL_COUNTRIES.length && (
+          <div style={{ marginTop: "1.5rem" }}>
+            <p className="text-sm text-muted mb-2">Países seleccionados ({selectedTerritories.length}):</p>
+            <div style={{ 
+              display: "flex", 
+              flexWrap: "wrap", 
+              gap: "4px", 
+              maxHeight: "120px", 
+              overflowY: "auto",
+              padding: "0.5rem",
+              background: "rgba(255,255,255,0.03)",
+              borderRadius: "8px"
+            }}>
+              {selectedTerritories.map(id => (
+                <span key={id} style={{ 
+                  fontSize: "0.75rem", 
+                  padding: "2px 8px", 
+                  background: "rgba(139, 92, 246, 0.2)", 
+                  color: "#c4b5fd",
+                  borderRadius: "12px"
+                }}>
+                  {TERRITORY_NAMES[id] || id}
+                  <button 
+                    onClick={() => toggleTerritory(id)}
+                    style={{ background: "none", border: "none", color: "inherit", marginLeft: "4px", cursor: "pointer", fontSize: "0.7rem", padding: 0 }}
+                  >
+                    ✕
+                  </button>
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
 
         {touched && !isValid() && (
           <p style={{ color: "#f87171", marginTop: "1.5rem" }}>
@@ -268,7 +342,7 @@ const [selectedPlatforms, setSelectedPlatforms] = useState<Platform[]>(
         </button>
 
         {saved && (
-          <span style={{ color: "#4ade80" }}>
+          <span style={{ color: "#4ade80", alignSelf: "center" }}>
             ✓ Guardado correctamente
           </span>
         )}

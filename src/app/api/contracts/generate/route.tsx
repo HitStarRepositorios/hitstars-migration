@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
+import { TERRITORY_NAMES } from "@/lib/territories";
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -26,11 +27,13 @@ export async function GET(req: Request) {
 
   const today = new Date().toLocaleDateString("es-ES");
 
-  const territory =
-    release.distributionWorldwide
-      ? "Territorio mundial"
-      : release.distributionTerritories?.join(", ") ??
-        "Territorio seleccionado";
+  const territory = release.distributionWorldwide
+    ? "Territorio mundial"
+    : release.distributionTerritories
+    ? release.distributionTerritories
+        .map((id: string) => TERRITORY_NAMES[id] || id)
+        .join(", ")
+    : "Territorio seleccionado";
 
   const pdfDoc = await PDFDocument.create();
   const font = await pdfDoc.embedFont(StandardFonts.TimesRoman);
