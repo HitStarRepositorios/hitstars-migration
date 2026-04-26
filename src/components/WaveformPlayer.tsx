@@ -218,14 +218,6 @@ export default function WaveformPlayer({
         boxShadow: "0 12px 40px rgba(0,0,0,0.3)",
       }}
     >
-      {/* ELEMENTO AUDIO OCULTO PARA BACKEND NATIVO */}
-      <audio 
-        ref={audioRef} 
-        src={audioUrl} 
-        crossOrigin="anonymous"
-        preload="auto"
-      />
-
       {/* ─── HEADER: TITLE & CONTROLS ────────────────────────────────────── */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
         <button 
