@@ -193,9 +193,39 @@ export default function TracksStep({ release }: any) {
     release.releaseArtists?.find((a: any) => a.isPrimary)?.artistName || ""
 
   const [mounted, setMounted] = useState(false);
-  const [tracks, setTracks] = useState<Track[]>(
-    (release.tracks as Track[]) || []
-  );
+  const [tracks, setTracks] = useState<Track[]>(() => {
+    const rawTracks = (release.tracks as Track[]) || [];
+    const releaseMainArtistName = release.releaseArtists?.find((a: any) => a.isPrimary)?.artistName || "";
+    
+    let workerUrl = process.env.NEXT_PUBLIC_R2_WORKER_URL || "";
+    if (workerUrl && !workerUrl.startsWith("http")) {
+      workerUrl = `https://${workerUrl}`;
+    }
+
+    return rawTracks.map((t: Track) => {
+      let proxiedUrl = undefined;
+      if (t.fileUrl && workerUrl) {
+        const audioIndex = t.fileUrl.indexOf("/audio/");
+        if (audioIndex !== -1) {
+          const key = t.fileUrl.substring(audioIndex + 1);
+          proxiedUrl = `${workerUrl}?key=${encodeURIComponent(key)}`;
+        }
+      }
+
+      const artists = (t.artists && t.artists.length > 0) 
+        ? t.artists 
+        : [
+            {
+              id: typeof crypto !== "undefined" ? crypto.randomUUID() : Math.random().toString(36).substring(2),
+              artistName: releaseMainArtistName,
+              role: "MAIN",
+            },
+          ];
+
+      return { ...t, proxiedUrl, artists };
+    }) as Track[];
+  });
+
   const [loading, setLoading] = useState(false);
   const [isSingle, setIsSingle] = useState(
     release.distributionType === "SINGLE"
@@ -219,49 +249,6 @@ export default function TracksStep({ release }: any) {
   useEffect(() => {
     setMounted(true);
   }, []);
-
-  useEffect(() => {
-
-    if (!release.tracks?.length) return
-
-    const releaseMainArtist =
-      release.releaseArtists?.find((a: any) => a.isPrimary)?.artistName || ""
-
-    let workerUrl = process.env.NEXT_PUBLIC_R2_WORKER_URL || "";
-    if (workerUrl && !workerUrl.startsWith("http")) {
-      workerUrl = `https://${workerUrl}`;
-    }
-
-    const tracksWithDefaultArtist = release.tracks.map((t: Track) => {
-      // Extraer la key del fileUrl si existe y crear la proxiedUrl
-      let proxiedUrl = undefined;
-      if (t.fileUrl && workerUrl) {
-        const audioIndex = t.fileUrl.indexOf("/audio/");
-        if (audioIndex !== -1) {
-          const key = t.fileUrl.substring(audioIndex + 1); // e.g., "audio/123-track.wav"
-          proxiedUrl = `${workerUrl}?key=${encodeURIComponent(key)}`;
-        }
-      }
-
-      if (t.artists && t.artists.length > 0) return { ...t, proxiedUrl };
-
-      return {
-        ...t,
-        proxiedUrl,
-        artists: [
-          {
-            id: crypto.randomUUID(),
-            artistName: releaseMainArtist,
-            role: "MAIN"
-          }
-        ]
-      }
-
-    })
-
-    setTracks(tracksWithDefaultArtist)
-
-  }, [release.id])
 
 
 

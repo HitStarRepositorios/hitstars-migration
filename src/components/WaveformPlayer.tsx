@@ -63,22 +63,31 @@ export default function WaveformPlayer({
   const suggestedPreview =
     segments.find(s => s.type === "chorus")?.start ?? null;
 
-  /* VISIBILITY OBSERVER */
+  /* VISIBILITY OBSERVER & FALLBACK */
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
+    
     const observer = new IntersectionObserver(([entry]) => {
       if (entry.isIntersecting) setVisible(true);
     }, { rootMargin: "300px" });
+    
     observer.observe(el);
-    return () => observer.disconnect();
+    
+    // Fallback: Si el observer no dispara, forzamos visibilidad tras 500ms
+    const timer = setTimeout(() => setVisible(true), 500);
+    
+    return () => {
+      observer.disconnect();
+      clearTimeout(timer);
+    };
   }, []);
-
+ 
   /* CREATE WAVESURFER */
   useEffect(() => {
     if (!visible || !waveformRef.current || !audioUrl) return;
     if (wavesurfer.current) return;
-
+ 
     const ws = WaveSurfer.create({
       container: waveformRef.current,
       waveColor: "rgba(255, 255, 255, 0.15)",
@@ -91,11 +100,15 @@ export default function WaveformPlayer({
       normalize: true,
       interact: true,
       cursorWidth: 2,
+      // Habilitar CORS para peticiones de audio
+      fetchParams: {
+        mode: 'cors'
+      }
     });
-
+ 
     wavesurfer.current = ws;
     ws.load(audioUrl);
-
+ 
     ws.on("ready", () => {
       setReady(true);
       if (previewStart && duration) {
