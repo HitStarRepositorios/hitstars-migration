@@ -73,8 +73,8 @@ for i in range(1, len(similarity) - 1):
         np.abs(similarity[i] - similarity[i-1])
     )
 
-# suavizar curva
-kernel = np.ones(8) / 8
+# suavizar curva con ventana más grande para evitar micro-segmentos
+kernel = np.ones(16) / 16
 novelty = np.convolve(novelty, kernel, mode="same")
 
 threshold = np.mean(novelty) * 1.5
@@ -167,35 +167,42 @@ section_vectors = np.array(section_vectors)
 
 # ---------------- REPETITION SCORE ----------------
 
-repetition = [0] * len(section_vectors)
+repetition = [0.0] * len(section_vectors)
 
 for i in range(len(section_vectors)):
-
     for j in range(len(section_vectors)):
-
         if i == j:
             continue
-
         similarity = np.dot(section_vectors[i], section_vectors[j])
-
         if similarity > 0.85:
             repetition[i] += 1
 
+# Normalizar repetición (0 a 1)
+max_rep = max(repetition) if max(repetition) > 0 else 1
+repetition_norm = [r / max_rep for r in repetition]
+
 # ---------------- ENERGY SCORE ----------------
 
-avg_energy = np.mean(section_energy)
-
-energy_score = [
-    1 if e > avg_energy * 1.15 else 0
-    for e in section_energy
-]
+# Normalizar energía (0 a 1)
+max_energy = max(section_energy) if max(section_energy) > 0 else 1
+energy_norm = [e / max_energy for e in section_energy]
 
 # ---------------- CHORUS SCORE ----------------
+# Damos más peso a la energía (70%) que a la repetición (30%)
+# El estribillo suele ser la parte más fuerte y que se repite.
 
-scores = [
-    repetition[i] + energy_score[i]
-    for i in range(len(repetition))
-]
+scores = []
+for i in range(len(segments)):
+    seg_duration = segments[i]["end"] - segments[i]["start"]
+    
+    # Penalizar segmentos muy cortos como estribillos (menos de 10s)
+    length_penalty = 1.0 if seg_duration >= 10 else 0.2
+    
+    # Penalizar la intro como estribillo (si empieza en 0)
+    pos_penalty = 0.5 if segments[i]["start"] < 15 else 1.0
+    
+    score = (0.7 * energy_norm[i] + 0.3 * repetition_norm[i]) * length_penalty * pos_penalty
+    scores.append(score)
 
 chorus_index = int(np.argmax(scores)) if scores else -1
 
@@ -209,7 +216,7 @@ for i, s in enumerate(segments):
     elif i == len(segments) - 1:
         s["type"] = "outro"
 
-    elif scores[i] == scores[chorus_index] and scores[i] > 0:
+    elif i == chorus_index and scores[i] > 0.4:
         s["type"] = "chorus"
 
     else:

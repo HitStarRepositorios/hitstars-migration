@@ -948,7 +948,6 @@ export default function TracksStep({ release }: any) {
 
                         </div>  {/* TWO COLUMNS GRID */}
 
-                        {/* PREVIEW START */}
                         <div
                           style={{
                             gridColumn: "1 / -1",
@@ -961,7 +960,7 @@ export default function TracksStep({ release }: any) {
                         >
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.2rem' }}>
                             <div className="form-label" style={{ marginBottom: 0, fontWeight: 600 }}>
-                              Tiempo de inicio del preview
+                              Tiempo de inicio sugerido (TikTok, Instagram, Reels...)
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                                <input 
@@ -1021,7 +1020,7 @@ export default function TracksStep({ release }: any) {
                             lineHeight: "1.5",
                             opacity: 0.7
                           }}>
-                            Este punto se usará como inicio del preview en plataformas como TikTok, Instagram Music, YouTube Shorts y otros DSPs.
+                            Este punto se usará como inicio del preview en plataformas como TikTok, Instagram Music, YouTube Shorts y otros DSPs. Selecciona el estribillo o la parte más viral de la canción.
                           </p>
                         </div>
                         {/* REC EDITION & FLAGS (COMPACT ROW) */}

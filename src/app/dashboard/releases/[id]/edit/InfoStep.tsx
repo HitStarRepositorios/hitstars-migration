@@ -1,10 +1,87 @@
 "use client";
 
 import { useActionState } from "react";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { updateReleaseInfoAction } from "@/app/actions/releases";
 import { GENRES } from "@/lib/genres";
 import { LANGUAGES } from "@/lib/languages";
+
+function LanguageSelect({ defaultValue, languages }: { defaultValue: string, languages: any[] }) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const [value, setValue] = useState(defaultValue);
+  
+  const selectedLang = languages.find(l => l.code === value);
+  const filtered = languages.filter(l => 
+    l.label.toLowerCase().includes(search.toLowerCase()) || 
+    l.code.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    function click(e: any) { if (ref.current && !ref.current.contains(e.target)) setOpen(false); }
+    document.addEventListener("mousedown", click);
+    return () => document.removeEventListener("mousedown", click);
+  }, []);
+
+  return (
+    <div className="relative" ref={ref} style={{ position: "relative" }}>
+      <input type="hidden" name="language" value={value} />
+      
+      <div 
+        className="form-input" 
+        style={{ cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" }}
+        onClick={() => { setOpen(!open); setSearch(""); }}
+      >
+        <span>{selectedLang ? `${selectedLang.label} (${selectedLang.code})` : "Seleccionar idioma"}</span>
+        <span style={{ opacity: 0.5, fontSize: "0.8rem" }}>{open ? "▲" : "▼"}</span>
+      </div>
+
+      {open && (
+        <div style={{
+          position: "absolute", top: "100%", left: 0, right: 0, zIndex: 50, 
+          background: "#1b1b22", border: "1px solid rgba(255,255,255,0.1)", 
+          borderRadius: "8px", marginTop: "4px", padding: "8px", boxShadow: "0 10px 25px rgba(0,0,0,0.5)"
+        }}>
+          <input 
+            type="text" 
+            autoFocus
+            placeholder="Buscar idioma..." 
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="form-input"
+            style={{ marginBottom: "8px", padding: "6px 10px", minHeight: "36px", width: "100%" }}
+          />
+          <div style={{ maxHeight: "200px", overflowY: "auto", display: "flex", flexDirection: "column", gap: "2px" }}>
+            {filtered.length === 0 ? <div style={{ padding: "8px", opacity: 0.5, fontSize: "0.9rem" }}>No se encontraron idiomas.</div> : null}
+            {filtered.map(lang => (
+              <div 
+                key={lang.code}
+                onClick={() => { setValue(lang.code); setOpen(false); }}
+                style={{
+                  padding: "8px 10px",
+                  borderRadius: "6px",
+                  cursor: "pointer",
+                  background: value === lang.code ? "rgba(139,92,246,0.2)" : "transparent",
+                  color: value === lang.code ? "#c4b5fd" : "inherit",
+                  transition: "background 0.2s"
+                }}
+                onMouseEnter={(e) => {
+                  if (value !== lang.code) e.currentTarget.style.background = "rgba(255,255,255,0.05)";
+                }}
+                onMouseLeave={(e) => {
+                  if (value !== lang.code) e.currentTarget.style.background = "transparent";
+                }}
+              >
+                {lang.label} ({lang.code})
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function InfoStep({ release }: any) {
   const [state, formAction, pending] = useActionState(
@@ -173,19 +250,7 @@ export default function InfoStep({ release }: any) {
       {/* IDIOMA */}
       <div className="form-group">
         <label className="form-label">Idioma de la canción</label>
-        <select
-          name="language"
-          defaultValue={release.language || ""}
-          className="form-input"
-        >
-          <option value="">Seleccionar idioma</option>
-
-          {LANGUAGES.map((lang) => (
-            <option key={lang.code} value={lang.code}>
-              {lang.label} ({lang.code})
-            </option>
-          ))}
-        </select>
+        <LanguageSelect defaultValue={release.language || ""} languages={LANGUAGES} />
       </div>
 
       {/* TIPO */}
