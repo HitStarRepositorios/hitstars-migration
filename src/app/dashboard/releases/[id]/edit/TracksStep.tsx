@@ -7,6 +7,7 @@ import TrackArtistsEditor from "@/components/TrackArtistsEditor";
 import { useRouter } from "next/navigation";
 import WavDropzone from "@/components/WavDropzone"
 import { analyzeAudio, normalizeBPM } from "@/lib/audio/audioAnalysis";
+import SearchableSelect from "@/components/SearchableSelect";
 
 
 import {
@@ -894,42 +895,14 @@ export default function TracksStep({ release }: any) {
                             </label>
 
                             <div style={{ position: "relative" }}>
-                              <select
+                              <SearchableSelect
                                 value={track.subGenre || ""}
-                                onChange={(e) =>
-                                  updateTrack(track.id, "subGenre", e.target.value)
-                                }
-                                className="form-input"
-                                style={{
-                                  appearance: "none",
-                                  paddingRight: "44px",
-                                  borderColor: !track.subGenre ? "#ef4444" : undefined
-                                }}
+                                onChange={(val) => updateTrack(track.id, "subGenre", val)}
+                                options={allowedSubgenres.map((g: any) => ({ value: g.value, label: g.label }))}
+                                placeholder="Seleccionar subgénero"
+                                searchPlaceholder="Buscar subgénero..."
                                 disabled={!release.genre}
-                              >
-                                <option value="">Seleccionar subgénero</option>
-
-                                {allowedSubgenres.map((g) => (
-                                  <option key={g.value} value={g.value}>
-                                    {g.label}
-                                  </option>
-                                ))}
-                              </select>
-
-                              {/* custom arrow */}
-                              <div
-                                style={{
-                                  position: "absolute",
-                                  right: "65px",
-                                  top: "50%",
-                                  transform: "translateY(-50%)",
-                                  pointerEvents: "none",
-                                  fontSize: "0.9rem",
-                                  opacity: 0.7
-                                }}
-                              >
-                                ▾
-                              </div>
+                              />
                             </div>
                             {!track.subGenre && (
                               <div
