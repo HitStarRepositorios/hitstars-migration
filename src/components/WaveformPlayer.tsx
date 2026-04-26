@@ -15,6 +15,7 @@ type Props = {
   duration?: number;
   segments?: Segment[];
   onPreviewChange?: (seconds: number) => void;
+  workerToken?: string;
 };
 
 export default function WaveformPlayer({
@@ -23,6 +24,7 @@ export default function WaveformPlayer({
   duration,
   segments = [],
   onPreviewChange,
+  workerToken,
 }: Props) {
 
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -34,9 +36,9 @@ export default function WaveformPlayer({
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [ready, setReady] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [visible, setVisible] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // Snapshot Refs para evitar cierres obsoletos (Stale Closures)
   const durationRef = useRef(duration);
@@ -87,74 +89,90 @@ export default function WaveformPlayer({
  
   /* CREATE WAVESURFER */
   useEffect(() => {
-    if (!visible || !waveformRef.current || !audioUrl || !audioRef.current) return;
+    if (!visible || !waveformRef.current || !audioUrl) return;
     if (wavesurfer.current) return;
  
-    try {
-      setError(null);
-      
-      // Forzar recarga del elemento audio para evitar estados de error cacheados
-      if (audioRef.current) {
-        audioRef.current.load();
-      }
+    let blobUrl = "";
 
-      const ws = WaveSurfer.create({
-        container: waveformRef.current,
-        media: audioRef.current,
-        waveColor: "rgba(255, 255, 255, 0.15)",
-        progressColor: "#a78bfa",
-        cursorColor: "#c4b5fd",
-        height: 60,
-        barWidth: 2,
-        barGap: 3,
-        barRadius: 4,
-        normalize: true,
-        interact: true,
-        cursorWidth: 2,
-      });
-   
-      wavesurfer.current = ws;
- 
-      ws.on("ready", () => {
-        setReady(true);
+    const initWaveSurfer = async () => {
+      try {
+        setReady(false);
         setError(null);
-        if (previewStart && duration) {
-          ws.seekTo(previewStart / duration);
-        }
-      });
-
-      ws.on("play", () => setIsPlaying(true));
-      ws.on("pause", () => setIsPlaying(false));
-      ws.on("timeupdate", (t) => setCurrentTime(t));
-
-      ws.on("error", (err) => {
-        console.error("WaveSurfer Error:", err);
         
-        // Si falla la URL con proxy/token, intentamos una vez con la URL directa (si existe)
-        if (audioUrl.includes('token=') || audioUrl.includes('?key=')) {
-          console.log("Intentando fallback a URL directa...");
-          setError("Error en el proxy. Reintentando conexión directa...");
-          
-          // Intentar extraer la URL original o simplemente avisar
-          // En este componente no tenemos track.fileUrl directamente, así que 
-          // lo mejor es avisar al usuario o intentar limpiar la URL.
+        let finalUrl = audioUrl;
+
+        // Si es una URL remota y tenemos token, intentamos fetch para bypass de CORS/Auth
+        if (audioUrl.startsWith('http') && !audioUrl.includes('blob:')) {
+          setLoading(true);
+          try {
+            const headers: Record<string, string> = {};
+            if (workerToken) {
+              headers['Authorization'] = `Bearer ${workerToken}`;
+            }
+
+            const response = await fetch(audioUrl, { headers });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            
+            const blob = await response.blob();
+            blobUrl = URL.createObjectURL(blob);
+            finalUrl = blobUrl;
+          } catch (fetchErr) {
+            console.error("Fetch fallback failed:", fetchErr);
+            // Si falla el fetch, seguimos con la URL original por si acaso
+          } finally {
+            setLoading(false);
+          }
         }
+
+        const ws = WaveSurfer.create({
+          container: waveformRef.current!,
+          waveColor: "rgba(255, 255, 255, 0.15)",
+          progressColor: "#a78bfa",
+          cursorColor: "#c4b5fd",
+          height: 60,
+          barWidth: 2,
+          barGap: 3,
+          barRadius: 4,
+          normalize: true,
+          interact: true,
+          cursorWidth: 2,
+          url: finalUrl,
+        });
+     
+        wavesurfer.current = ws;
+    
+        ws.on("ready", () => {
+          setReady(true);
+          setError(null);
+          if (previewStart && duration) {
+            ws.seekTo(previewStart / duration);
+          }
+        });
+    
+        ws.on("play", () => setIsPlaying(true));
+        ws.on("pause", () => setIsPlaying(false));
+        ws.on("timeupdate", (t) => setCurrentTime(t));
         
-        setError("Error de conexión con el servidor de audio.");
-      });
+        ws.on("error", (err) => {
+          console.error("WaveSurfer Error:", err);
+          setError("Error de conexión con el servidor de audio.");
+        });
+    
+        ws.on("interaction", (newTime: number) => {
+          if (typeof newTime !== 'number') return;
+          isInteracting.current = true;
+          if (seekTimeout.current) clearTimeout(seekTimeout.current);
+          seekTimeout.current = setTimeout(() => { isInteracting.current = false; }, 1000);
+          callbackRef.current?.(Math.floor(newTime));
+        });
+      } catch (e) {
+        console.error("WaveSurfer Init Error:", e);
+        setError("Error al inicializar el reproductor.");
+      }
+    };
 
-      ws.on("interaction", (newTime: number) => {
-        if (typeof newTime !== 'number') return;
-        isInteracting.current = true;
-        if (seekTimeout.current) clearTimeout(seekTimeout.current);
-        seekTimeout.current = setTimeout(() => { isInteracting.current = false; }, 1000);
-        callbackRef.current?.(Math.floor(newTime));
-      });
-    } catch (e) {
-      console.error("WaveSurfer Init Error:", e);
-      setError("Error al inicializar el reproductor.");
-    }
-
+    initWaveSurfer();
+ 
     return () => {
       if (wavesurfer.current) {
         try {
@@ -163,8 +181,9 @@ export default function WaveformPlayer({
         } catch (e) {}
         wavesurfer.current = null;
       }
+      if (blobUrl) URL.revokeObjectURL(blobUrl);
     };
-  }, [audioUrl, visible]);
+  }, [audioUrl, visible, workerToken]);
 
   /* UPDATE PREVIEW POSITION */
   useEffect(() => {
@@ -279,6 +298,30 @@ export default function WaveformPlayer({
 
       {/* ─── WAVEFORM ──────────────────────────────────────────────────────── */}
       <div style={{ position: "relative", minHeight: "60px", marginBottom: "10px" }}>
+        {loading && (
+          <div style={{ 
+            position: 'absolute', 
+            inset: 0, 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center', 
+            background: 'rgba(0,0,0,0.2)', 
+            backdropFilter: 'blur(4px)',
+            color: '#a78bfa', 
+            zIndex: 30,
+            borderRadius: '12px',
+            fontSize: '0.85rem',
+            fontWeight: 600
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <svg className="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+              </svg>
+              Preparando audio...
+            </div>
+          </div>
+        )}
+
         {error && (
           <div style={{ 
             position: 'absolute', 

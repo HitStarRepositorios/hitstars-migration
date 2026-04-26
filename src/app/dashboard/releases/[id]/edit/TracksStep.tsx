@@ -988,6 +988,8 @@ export default function TracksStep({ release }: any) {
                               previewStart={track.previewStart ?? 0}
                               duration={track.duration ?? 0}
                               segments={track.segments ?? []}
+                              workerToken={process.env.NEXT_PUBLIC_R2_WORKER_TOKEN}
+                              loadingIndicator={<div style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>Loading...</div>}
                               onPreviewChange={(seconds) => {
                                 updateTrack(track.id, "previewStart", seconds);
                                 setPreviewInputs((prev) => ({
