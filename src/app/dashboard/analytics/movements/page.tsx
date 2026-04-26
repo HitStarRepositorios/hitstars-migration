@@ -10,6 +10,9 @@ export default function MovementsPage() {
 
   const [amount, setAmount] = useState("")
 
+  const [search, setSearch] = useState("")
+  const [statusFilter, setStatusFilter] = useState("ALL")
+
   useEffect(() => {
 
     async function load() {
@@ -176,12 +179,33 @@ const pending = movements
 
       {/* TABLE */}
 
+      <div className="flex items-center gap-lg" style={{ marginBottom: "24px" }}>
+        <input
+          placeholder="Buscar..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="form-input"
+          style={{ width: "320px" }}
+        />
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="form-select"
+          style={{ width: "200px" }}
+        >
+          <option value="ALL">Todos</option>
+          <option value="PAID">Paid</option>
+          <option value="PENDING">Pending</option>
+          <option value="FAILED">Failed</option>
+          <option value="CANCELLED">Cancelled</option>
+        </select>
+      </div>
 
-
-
-
-
-      <MovementsTable data={movements || []} />
+      <MovementsTable data={movements.filter(m => {
+        if (search && !(m.type?.toLowerCase().includes(search.toLowerCase()) || m.status?.toLowerCase().includes(search.toLowerCase()))) return false;
+        if (statusFilter !== "ALL" && m.status !== statusFilter) return false;
+        return true;
+      })} />
 
 
 

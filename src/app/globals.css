@@ -507,6 +507,7 @@ tbody tr:hover {
   font-weight: 600;
   border-radius: 999px;
   border: 1px solid transparent;
+  white-space: nowrap;
 }
 
 .badge-purple {

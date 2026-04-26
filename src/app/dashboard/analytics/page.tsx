@@ -103,6 +103,10 @@ if (typeFilter !== "ALL") {
     return tx.kind === "PRODUCER"
   }
 
+  if (typeFilter === "WITHDRAWAL") {
+    return tx.track === "WITHDRAWAL" || tx.type === "WITHDRAWAL"
+  }
+
 }
 
     return true
@@ -236,6 +240,7 @@ if (typeFilter !== "ALL") {
               <option value="MASTER">Master</option>
               <option value="PUBLISHING">Publishing</option>
               <option value="PRODUCER">Producer</option>
+              <option value="WITHDRAWAL">Withdrawal</option>
             </select>
 
           </div>
