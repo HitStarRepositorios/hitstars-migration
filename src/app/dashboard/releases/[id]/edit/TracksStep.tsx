@@ -209,7 +209,8 @@ export default function TracksStep({ release }: any) {
         const audioIndex = t.fileUrl.indexOf("/audio/");
         if (audioIndex !== -1) {
           const key = t.fileUrl.substring(audioIndex + 1);
-          proxiedUrl = `${workerUrl}?key=${encodeURIComponent(key)}`;
+          // Añadir un cache-buster para evitar que el navegador use una respuesta fallida cacheada
+          proxiedUrl = `${workerUrl}?key=${encodeURIComponent(key)}&t=${Date.now()}`;
         }
       }
 
@@ -227,6 +228,10 @@ export default function TracksStep({ release }: any) {
     }) as Track[];
   });
 
+  const [ready, setReady] = useState(false);
+  const [visible, setVisible] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const [loading, setLoading] = useState(false);
   const [isSingle, setIsSingle] = useState(
     release.distributionType === "SINGLE"
@@ -386,7 +391,7 @@ export default function TracksStep({ release }: any) {
         if (regData.success) {
           // Generamos una URL local y una URL proxied por el Worker
           const localBlobUrl = URL.createObjectURL(file);
-          const proxiedUrl = `${workerUrl}?key=${encodeURIComponent(key)}`;
+          const proxiedUrl = `${workerUrl}?key=${encodeURIComponent(key)}&t=${Date.now()}`;
           
           setTracks((prev) => {
             const newList = [...prev, { ...regData.track, localUrl: localBlobUrl, proxiedUrl }];

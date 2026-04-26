@@ -35,6 +35,7 @@ export default function WaveformPlayer({
   const [currentTime, setCurrentTime] = useState(0);
   const [ready, setReady] = useState(false);
   const [visible, setVisible] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // Snapshot Refs para evitar cierres obsoletos (Stale Closures)
@@ -90,6 +91,13 @@ export default function WaveformPlayer({
     if (wavesurfer.current) return;
  
     try {
+      setError(null);
+      
+      // Forzar recarga del elemento audio para evitar estados de error cacheados
+      if (audioRef.current) {
+        audioRef.current.load();
+      }
+
       const ws = WaveSurfer.create({
         container: waveformRef.current,
         media: audioRef.current,
@@ -107,16 +115,22 @@ export default function WaveformPlayer({
    
       wavesurfer.current = ws;
  
-    ws.on("ready", () => {
-      setReady(true);
-      if (previewStart && duration) {
-        ws.seekTo(previewStart / duration);
-      }
-    });
+      ws.on("ready", () => {
+        setReady(true);
+        setError(null);
+        if (previewStart && duration) {
+          ws.seekTo(previewStart / duration);
+        }
+      });
 
-    ws.on("play", () => setIsPlaying(true));
-    ws.on("pause", () => setIsPlaying(false));
-    ws.on("timeupdate", (t) => setCurrentTime(t));
+      ws.on("play", () => setIsPlaying(true));
+      ws.on("pause", () => setIsPlaying(false));
+      ws.on("timeupdate", (t) => setCurrentTime(t));
+
+      ws.on("error", (err) => {
+        console.error("WaveSurfer Error:", err);
+        setError("Error de conexión con el servidor de audio.");
+      });
 
       ws.on("interaction", (newTime: number) => {
         if (typeof newTime !== 'number') return;
@@ -127,6 +141,7 @@ export default function WaveformPlayer({
       });
     } catch (e) {
       console.error("WaveSurfer Init Error:", e);
+      setError("Error al inicializar el reproductor.");
     }
 
     return () => {
@@ -253,6 +268,26 @@ export default function WaveformPlayer({
 
       {/* ─── WAVEFORM ──────────────────────────────────────────────────────── */}
       <div style={{ position: "relative", minHeight: "60px", marginBottom: "10px" }}>
+        {error && (
+          <div style={{ 
+            position: 'absolute', 
+            inset: 0, 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center', 
+            background: 'rgba(239,68,68,0.1)', 
+            color: '#ef4444', 
+            zIndex: 20,
+            borderRadius: '12px',
+            fontSize: '0.8rem',
+            fontWeight: 600,
+            textAlign: 'center',
+            padding: '0 20px',
+            border: '1px solid rgba(239,68,68,0.2)'
+          }}>
+            {error}
+          </div>
+        )}
         {visible ? (
           <div ref={waveformRef} />
         ) : (
