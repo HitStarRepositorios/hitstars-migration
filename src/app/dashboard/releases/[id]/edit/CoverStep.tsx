@@ -9,57 +9,94 @@ export default function CoverStep({ release }: any) {
   const [preview, setPreview] = useState<string | null>(release.coverUrl || null)
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-
     e.preventDefault()
 
     const form = e.currentTarget
     const fileInput = form.cover as HTMLInputElement
-
     const file = fileInput.files?.[0]
 
     /* 🔴 SI NO HAY ARCHIVO NUEVO */
-
     if (!file) {
-
       if (release.coverUrl) {
         setMessage("La portada ya está subida.")
       } else {
         setMessage("Selecciona una imagen.")
       }
-
       return
-
     }
 
     /* 🟣 SI HAY ARCHIVO → SUBIR */
-
     setLoading(true)
     setMessage(null)
 
-    const formData = new FormData(form)
+    try {
+      // 1. Redimensionar en cliente a 3000x3000 para cumplir requisitos
+      const resizedBlob: Blob = await new Promise((resolve, reject) => {
+        const img = new Image()
+        const objectUrl = URL.createObjectURL(file)
+        img.onload = () => {
+          URL.revokeObjectURL(objectUrl)
+          const canvas = document.createElement("canvas")
+          canvas.width = 3000
+          canvas.height = 3000
+          const ctx = canvas.getContext("2d")
+          if (!ctx) return reject(new Error("No canvas context"))
+          
+          ctx.drawImage(img, 0, 0, 3000, 3000)
+          
+          const type = file.type === "image/png" ? "image/png" : "image/jpeg"
+          canvas.toBlob((blob) => {
+            if (blob) resolve(blob)
+            else reject(new Error("Error generating image blob"))
+          }, type, 0.95)
+        }
+        img.onerror = () => reject(new Error("Error loading image"))
+        img.src = objectUrl
+      })
 
-    const res = await fetch("/api/upload-cover", {
-      method: "POST",
-      body: formData,
-    })
+      // 2. Obtener URL presignada
+      const urlRes = await fetch("/api/cover-upload-url", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          releaseId: release.id,
+          contentType: file.type === "image/png" ? "image/png" : "image/jpeg",
+          filename: file.name
+        })
+      })
+      const urlData = await urlRes.json()
+      if (urlData.error) throw new Error(urlData.error)
 
-    const data = await res.json()
+      // 3. Subir a R2 directamente
+      const uploadRes = await fetch(urlData.signedUrl, {
+        method: "PUT",
+        headers: { "Content-Type": file.type === "image/png" ? "image/png" : "image/jpeg" },
+        body: resizedBlob
+      })
+      
+      if (!uploadRes.ok) throw new Error("Error al subir la imagen a R2")
 
-    if (data.error) {
-
-      setMessage(data.error)
-
-    } else {
+      // 4. Guardar URL en la BD
+      const saveRes = await fetch("/api/save-cover-url", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          releaseId: release.id,
+          coverUrl: urlData.publicUrl
+        })
+      })
+      const saveData = await saveRes.json()
+      if (saveData.error) throw new Error(saveData.error)
 
       setMessage("Portada actualizada correctamente.")
+      setPreview(saveData.coverUrl || preview)
 
-      // refrescar preview
-      setPreview(data.coverUrl || preview)
-
+    } catch (error: any) {
+      console.error(error)
+      setMessage(error.message || "Error al subir la portada.")
+    } finally {
+      setLoading(false)
     }
-
-    setLoading(false)
-
   }
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
