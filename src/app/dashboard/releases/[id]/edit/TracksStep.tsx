@@ -235,9 +235,10 @@ export default function TracksStep({ release }: any) {
     const tracksWithDefaultArtist = release.tracks.map((t: Track) => {
       // Extraer la key del fileUrl si existe y crear la proxiedUrl
       let proxiedUrl = undefined;
-      if (t.fileUrl && t.fileUrl.includes("cdn.hitstar.es/")) {
-        const key = t.fileUrl.split("cdn.hitstar.es/")[1];
-        if (key && workerUrl) {
+      if (t.fileUrl && workerUrl) {
+        const audioIndex = t.fileUrl.indexOf("/audio/");
+        if (audioIndex !== -1) {
+          const key = t.fileUrl.substring(audioIndex + 1); // e.g., "audio/123-track.wav"
           proxiedUrl = `${workerUrl}?key=${encodeURIComponent(key)}`;
         }
       }
