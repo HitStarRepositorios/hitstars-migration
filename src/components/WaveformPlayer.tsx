@@ -35,6 +35,7 @@ export default function WaveformPlayer({
   const [currentTime, setCurrentTime] = useState(0);
   const [ready, setReady] = useState(false);
   const [visible, setVisible] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // Snapshot Refs para evitar cierres obsoletos (Stale Closures)
   const durationRef = useRef(duration);
@@ -85,29 +86,26 @@ export default function WaveformPlayer({
  
   /* CREATE WAVESURFER */
   useEffect(() => {
-    if (!visible || !waveformRef.current || !audioUrl) return;
+    if (!visible || !waveformRef.current || !audioUrl || !audioRef.current) return;
     if (wavesurfer.current) return;
  
-    const ws = WaveSurfer.create({
-      container: waveformRef.current,
-      waveColor: "rgba(255, 255, 255, 0.15)",
-      progressColor: "#a78bfa",
-      cursorColor: "#c4b5fd",
-      height: 60,
-      barWidth: 2,
-      barGap: 3,
-      barRadius: 4,
-      normalize: true,
-      interact: true,
-      cursorWidth: 2,
-      // Habilitar CORS para peticiones de audio
-      fetchParams: {
-        mode: 'cors'
-      }
-    });
- 
-    wavesurfer.current = ws;
-    ws.load(audioUrl);
+    try {
+      const ws = WaveSurfer.create({
+        container: waveformRef.current,
+        media: audioRef.current,
+        waveColor: "rgba(255, 255, 255, 0.15)",
+        progressColor: "#a78bfa",
+        cursorColor: "#c4b5fd",
+        height: 60,
+        barWidth: 2,
+        barGap: 3,
+        barRadius: 4,
+        normalize: true,
+        interact: true,
+        cursorWidth: 2,
+      });
+   
+      wavesurfer.current = ws;
  
     ws.on("ready", () => {
       setReady(true);
@@ -120,13 +118,16 @@ export default function WaveformPlayer({
     ws.on("pause", () => setIsPlaying(false));
     ws.on("timeupdate", (t) => setCurrentTime(t));
 
-    ws.on("interaction", (newTime: number) => {
-      if (typeof newTime !== 'number') return;
-      isInteracting.current = true;
-      if (seekTimeout.current) clearTimeout(seekTimeout.current);
-      seekTimeout.current = setTimeout(() => { isInteracting.current = false; }, 1000);
-      callbackRef.current?.(Math.floor(newTime));
-    });
+      ws.on("interaction", (newTime: number) => {
+        if (typeof newTime !== 'number') return;
+        isInteracting.current = true;
+        if (seekTimeout.current) clearTimeout(seekTimeout.current);
+        seekTimeout.current = setTimeout(() => { isInteracting.current = false; }, 1000);
+        callbackRef.current?.(Math.floor(newTime));
+      });
+    } catch (e) {
+      console.error("WaveSurfer Init Error:", e);
+    }
 
     return () => {
       if (wavesurfer.current) {
@@ -172,6 +173,14 @@ export default function WaveformPlayer({
         boxShadow: "0 12px 40px rgba(0,0,0,0.3)",
       }}
     >
+      {/* ELEMENTO AUDIO OCULTO PARA BACKEND NATIVO */}
+      <audio 
+        ref={audioRef} 
+        src={audioUrl} 
+        crossOrigin="anonymous"
+        preload="auto"
+      />
+
       {/* ─── HEADER: TITLE & CONTROLS ────────────────────────────────────── */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
         <button 
