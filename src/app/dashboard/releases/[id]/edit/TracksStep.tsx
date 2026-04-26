@@ -262,23 +262,7 @@ export default function TracksStep({ release }: any) {
 
   }, [release.id])
 
-  /** 
-   * AUTO-UPGRADE LOGIC (Phase 22)
-   * If a track is opened and its analysis is legacy (< v22), re-trigger 
-   * the professional MFCC/Novelty analysis automatically.
-   */
-  useEffect(() => {
-    if (!openTrackId || loading) return;
-    
-    const track = tracks.find(t => t.id === openTrackId);
-    if (!track) return;
 
-    // Check if the current analysis is missing or older than Phase 22
-    if (!track.analysisVersion || track.analysisVersion < 22) {
-      console.log(`[AutoUpgrade] Upgrading analysis for ${track.title} to v22...`);
-      handleReanalyze(openTrackId);
-    }
-  }, [openTrackId]);
 
   const invalidSingle = isSingle && tracks.length > 1;
   const tracksMissingSubgenre = tracks.filter(t => !t.subGenre || t.subGenre === "")
