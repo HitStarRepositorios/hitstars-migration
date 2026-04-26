@@ -101,8 +101,29 @@ export default function WaveformPlayer({
         
         let finalUrl = audioUrl;
 
+        // Si es una ruta API para obtener la URL firmada
+        if (audioUrl.startsWith('/api/')) {
+          setLoading(true);
+          try {
+            const response = await fetch(audioUrl);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const data = await response.json();
+            if (data.url) {
+              finalUrl = data.url;
+            } else {
+              throw new Error(data.error || "No URL returned");
+            }
+          } catch (fetchErr) {
+            console.error("API fetch failed:", fetchErr);
+            setError("Error de conexión con el servidor de audio.");
+            setLoading(false);
+            return;
+          } finally {
+            setLoading(false);
+          }
+        }
         // Si es una URL remota y tenemos token, intentamos fetch para bypass de CORS/Auth
-        if (audioUrl.startsWith('http') && !audioUrl.includes('blob:')) {
+        else if (audioUrl.startsWith('http') && !audioUrl.includes('blob:')) {
           setLoading(true);
           try {
             const headers: Record<string, string> = {};

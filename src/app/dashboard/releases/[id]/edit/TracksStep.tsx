@@ -528,7 +528,22 @@ export default function TracksStep({ release }: any) {
     setLoadingStatus(`Actualizando análisis de ${track.title}...`);
 
     try {
-      const sourceUrl = track.localUrl || track.proxiedUrl || track.fileUrl;
+      let sourceUrl = track.localUrl;
+      
+      if (!sourceUrl) {
+        const urlRes = await fetch(`/api/tracks/${trackId}/play`);
+        if (urlRes.ok) {
+          const urlData = await urlRes.json();
+          if (urlData.url) {
+            sourceUrl = urlData.url;
+          }
+        }
+      }
+      
+      if (!sourceUrl) {
+        sourceUrl = track.proxiedUrl || track.fileUrl;
+      }
+
       const response = await fetch(sourceUrl!);
       const blob = await response.blob();
       const file = new File([blob], "re-analyze.wav", { type: "audio/wav" });
@@ -982,9 +997,9 @@ export default function TracksStep({ release }: any) {
                             </div>
                           </div>
 
-                          { (track.localUrl || track.fileUrl || track.proxiedUrl) && (
+                          { (track.localUrl || track.id) && (
                             <WaveformPlayer
-                              audioUrl={(track.localUrl || track.proxiedUrl || track.fileUrl) as string}
+                              audioUrl={track.localUrl || `/api/tracks/${track.id}/play`}
                               previewStart={track.previewStart ?? 0}
                               duration={track.duration ?? 0}
                               segments={track.segments ?? []}
