@@ -198,8 +198,9 @@ export default function TracksStep({ release }: any) {
     const releaseMainArtistName = release.releaseArtists?.find((a: any) => a.isPrimary)?.artistName || "";
     
     let workerUrl = process.env.NEXT_PUBLIC_R2_WORKER_URL || "";
-    if (workerUrl && !workerUrl.startsWith("http")) {
-      workerUrl = `https://${workerUrl}`;
+    if (workerUrl) {
+      if (!workerUrl.startsWith("http")) workerUrl = `https://${workerUrl}`;
+      if (!workerUrl.endsWith("/")) workerUrl = `${workerUrl}/`;
     }
 
     return rawTracks.map((t: Track) => {
@@ -335,9 +336,12 @@ export default function TracksStep({ release }: any) {
 
         if (!workerUrl) throw new Error("NEXT_PUBLIC_R2_WORKER_URL no configurada en Vercel");
         
-        // Asegurar que la URL tenga https://
+        // Asegurar que la URL tenga https:// y termine en /
         if (!workerUrl.startsWith("http")) {
             workerUrl = `https://${workerUrl}`;
+        }
+        if (!workerUrl.endsWith("/")) {
+            workerUrl = `${workerUrl}/`;
         }
 
         const uploadRes = await fetch(`${workerUrl}?key=${encodeURIComponent(key)}`, {
